@@ -1,0 +1,88 @@
+
+The following needs to be included in the templates of the pages that use otree-redwoods decisions features.
+Put this is your block scripts:
+
+<script>
+    // Boilerplate that lets you access useful oTree template variables from Javascript.
+    var oTree = oTree || {};
+    (function() {
+      oTree.group = parseInt("{{ player.group.pk }}");
+      oTree.group = isNaN(oTree.group) ? null : oTree.group;
+      oTree.role = "{{ player.role }}";
+      oTree.participantCode = "{{ player.participant.code }}";
+      oTree.appName = "{{ subsession.app_name }}";
+      oTree.idInGroup = "{{ player.id_in_group }}";
+      oTree.csrfToken = "{{ csrf_token }}";
+      {% if view.is_debug %}
+      oTree.debug = true;
+      {% else %}
+      oTree.debug = false;
+      {% endif %}
+    })();
+
+    // Get the decision component and other-decision element.
+    var decision = document.querySelector("redwood-decision");
+    var otherDecision = document.getElementById("other-decision");
+
+    // Log period start/end to the JavaScript console.
+    document.querySelector("redwood-period").addEventListener('period-start', function(event) {
+      console.log('period started');
+    });
+    document.querySelector("redwood-period").addEventListener('period-end', function(event) {
+      console.log('period ended');
+    });
+
+    // When group decisions changes, update the text of the otherDecision element.
+    decision.addEventListener('group-decisions-changed', function(event) {
+      otherDecision.innerText = decision.otherDecision;
+    });
+
+    // Attach this to a button onclick event to set your decision when the button is clicked.
+    function setDecision(d) {
+      decision.myDecision = d;
+    }
+  </script>
+
+  // Import the redwood-decision and redwood-period webcomponents.
+  <link
+    rel="import"
+    href="/static/otree-redwood/webcomponents/redwood-decision/redwood-decision.html">
+  <link
+    rel="import"
+    href="/static/otree-redwood/webcomponents/redwood-period/redwood-period.html">
+
+And put this in your block content: (you might need to put some stuff inside them)
+
+    <redwood-period></redwood-period>
+    <redwood-decision></redwood-decision>
+
+
+Notes on redwood
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,38 @@
+{% extends "global/Base.html" %}
+{% load staticfiles otree %}
+
+{% comment %}
+    <!--
+    Eli Pandolfo <epandolf@ucsc.edu>
+    -->
+{% endcomment %}
+
+{% block scripts %}
+    <script type="text/javascript">
+      window.onload = function () 
+      {
+        document.getElementById("arrive_time").value = (new Date()).toISOString();
+      }
+    </script>
+{% endblock %}
+
+
+{% block title %}
+    Welcome to the Laboratory
+{% endblock %}
+
+{% block content %}
+    <!-- form field for page load time. Value attribute gets set by script on window load,
+        and the form gets returned here -->
+    <input type="hidden" name="time_Instructions" id="arrive_time"/>
+
+    <h3>
+        Instructions
+    </h3>
+    <p>
+        Add some instructions here.
+    </p>
+
+{% next_button %}
+
+{% endblock %}

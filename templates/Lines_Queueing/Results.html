@@ -1,0 +1,31 @@
+{% extends "global/Page.html" %}
+{% load staticfiles otree %}
+
+{% block scripts %}
+    <script type="text/javascript">
+        window.onload = function () 
+        {
+            document.getElementById("arrive_time").value = (new Date()).toISOString();
+        }
+    </script>
+{% endblock %}
+
+{% block title %}
+    Results
+{% endblock %}
+
+{% block content %}
+    
+    <!-- form field for page load time. Value attribute gets set by script on window load,
+        and the form gets returned here -->
+    <input type="hidden" name="time_Results" id="arrive_time"/>
+    
+    <p>
+        Some results here
+    </p>
+
+    {% next_button %}
+
+{% endblock %}
+
+

@@ -1,0 +1,56 @@
+- divide ppl into subgroups
+    - all subgroups wpuld have same number of people
+- once they enter the room keep them in the room (for now) (cant trade back into line)
+
+- trade dec have bids
+bidding number decidied by player at start of round:
+    when a person does a successful trade with the person in front of them, they lose (time gained * their b), and the person in front gains (time lost * requester's b)
+
+b is range between 0 and their waiting cost
+waiting screen has calculator to help people calculate b: waiting time * per unit cost
+
+requesters can either give a bid or choose to not switch at beginning of round (before trading starts)
+
+can only trade with adjacent people
+if you have been requested a trade by person behind you and you click on request for the person in front of you:
+    - cant do it
+
+if someone says no to you, you cant request the same person again for 5 seconds. If a swith occurs in those 5 seconds, you can immediately request the new person in front of you
+
+each person has different 'service_time':
+rn assume each person takes same amount of time to go through when first in line
+service time oes not reset when transfer refer
+
+default: you nly know your own pay rate, and the bid when someone requests a trade with you
+no message sallowed to be sent
+
+if no response automatically no after some amount of time
+
+round lengths: ottal of all waiting times
+
+starting: everyone starts with random order at same time
+
+- if you are first in the queue, and your time runs out before you have accepted or declined a request, you go through the door and the request resolves itself.
+
+service room
+queue room
+
+data
+    waiting cost
+    bidding price ($ or no)
+    service time
+
+    trades:
+        timestamp
+        IDs of traders
+        bid price
+        accepted or declined
+
+ask kristian when he needs this done by, and whether i should prioritize this, rachels, or balance  
+
+treatment: whether people can balk before
+treatment: everyone sees everyone elses transfers
+
+once you are in the room can you still see trading taking place? I assume yes, so the queue and service rooms are all one screen
+
+have the group store a dictionary, mapping each player's ID to their participant.vars

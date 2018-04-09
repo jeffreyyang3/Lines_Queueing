@@ -1,0 +1,293 @@
+{% extends "global/Base.html" %}
+{% load staticfiles otree %}
+
+{% comment %}
+    <!--
+    Eli Pandolfo <epandolf@ucsc.edu>
+    -->
+{% endcomment %}
+
+{% block scripts %}
+    <script type='text/javascript'>
+        // time when user enters the queue room
+        // might want to change this to when all players arrive
+        window.onload = function () {
+            document.getElementById('arrive_time').value = (new Date()).toISOString()
+        }
+        
+        // time when a player enters the service room 
+        time_sr = function() {
+            document.getElementById('arrive_time').value = (new Date()).toISOString()
+        }
+
+        // Boilerplate that lets you access useful oTree template variables from Javascript.
+        var oTree = oTree || {};
+        (function() {
+            oTree.group = parseInt("{{ player.group.pk }}");
+            oTree.group = isNaN(oTree.group) ? null : oTree.group;
+            oTree.role = "{{ player.role }}";
+            oTree.participantCode = "{{ player.participant.code }}";
+            oTree.appName = "{{ subsession.app_name }}";
+            oTree.idInGroup = "{{ player.id_in_group }}";
+            oTree.csrfToken = "{{ csrf_token }}";
+            {% if view.is_debug %}
+            oTree.debug = true;
+            {% else %}
+            oTree.debug = false;
+            {% endif %}
+        })();
+
+        // Get the decision component and other-decision element.
+        var decision = document.querySelector("redwood-decision");
+        var otherDecision = document.getElementById("other-decision");
+
+        // Log period start/end to the JavaScript console.
+        document.querySelector("redwood-period").addEventListener('period-start', function(event) {
+            console.log('period started');
+        });
+        document.querySelector("redwood-period").addEventListener('period-end', function(event) {
+            console.log('period ended');
+        });
+
+        // When group decisions changes, update the text of the otherDecision element.
+        // decision.addEventListener('group-decisions-changed', function(event) {
+        //     otherDecision.innerText = decision.otherDecision;
+        // });
+
+        // Attach this to a button onclick event to set your decision when the button is clicked.
+        function setDecision(d) {
+            decision.myDecision = d;
+        }
+    </script>
+
+    <!--Import the redwood-decision and redwood-period webcomponents.-->
+    <link rel="import"
+        href="/static/otree-redwood/webcomponents/redwood-decision/redwood-decision.html">
+    <link rel="import"
+        href="/static/otree-redwood/webcomponents/redwood-period/redwood-period.html">
+
+    <script src="{% static "js/vue.js" %}"></script>
+    <script src="{% static "js/Queue.js" %}"></script>
+
+{% endblock %}
+
+{% block styles %}
+    <style>
+        .dev {
+            border-style: solid;
+            border-width: 1px;
+        }
+        .svg {
+            margin-left: -7px;
+        }
+        .infobar {
+            height: 70px;
+            background-color: #606060;
+            color: whitesmoke;
+        }
+        .infoborder {
+            border-right: solid;
+            border-width: 1px; 
+            border-color: whitesmoke;
+        }
+        .infocol {
+            text-align: center;
+            color: whitesmoke;
+            font-size: 16px;
+            font-family: monospace;
+        }
+        .queue-1 {
+            background-color: #e5e5e5;
+        }
+        .queue-2 {
+            background-color: #fafafa;
+        }
+        .q-el {
+            margin-top: 100px;
+        }
+        .service {
+            background-color: #c3c3c3;
+        }
+        .btn {
+            background-color: #606060;
+            color: whitesmoke;
+        }
+        .btn-row {
+            margin-top: -30px;
+            height: 40px;
+        }
+        circle {
+            stroke: #003da0;
+            stroke-width: 3px;
+            fill: none;
+        }
+        text {
+            color: #606060;
+            font-size: 16px;
+            font-family: monospace;
+        }
+    </style>
+{% endblock %}
+
+
+{% block title %}
+{% endblock %}
+
+{% block content %}
+    <!--form field for page load time-->
+    <input type="hidden" name="time_Queue" id="arrive_time" />
+
+    <redwood-period></redwood-period>
+    <redwood-decision></redwood-decision>
+    <redwood-channel></redwood-channel>
+
+    <div id="app">
+        <!-- can change height dynamically using Vue -->
+        <div class="row" style="height: 500px; border-style: solid; border-width: 1px; border-color: whitesmoke;">
+            <div class="col-8 queue" style="border-width: 1px">
+                <div class="row infobar">
+                    <div class="col-3 infocol infoborder">
+                        Round: <br>
+                        1
+                    </div>
+                    <div class="col-4 infocol infoborder">
+                        Pay Rate: <br>
+                        $0.00 / second
+                    </div>
+                    <div class="col-5 infocol infoborder">
+                        Time remaining in queue: <br>
+                        00:00
+                    </div>
+                </div>
+                <div class="row" style="height: 430px;">
+                    <div class="col-2 queue-1">
+                        <svg class="svg q-el"> 
+                            <circle cx="45" cy="60" r="40"/>
+                        </svg>
+                        <div class="row btn-row">
+                        </div>
+                    </div>
+                    <div class="col-2 queue-2">
+                        <svg class="svg q-el">
+                            <circle cx="45" cy="60" r="40"/>
+                        </svg>
+                        <div class="row btn-row">
+                        </div>
+                    </div>
+                    <div class="col-2 queue-1">
+                        <svg class="svg q-el">
+                            <circle cx="45" cy="60" r="40"/>
+                        </svg>
+                        <div class="row btn-row">
+                        </div>
+                    </div>
+                    <div class="col-2 queue-2">
+                        <svg class="svg q-el">
+                            <circle cx="45" cy="60" r="40"/>
+                        </svg>
+                        <div class="row btn-row">
+                            <div class="col-6">
+                                    <button type="button" id="trade" class="btn btn-large"
+                                    style="margin-left: -15px; background-color: green;">Yes</button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" id="trade" class="btn btn-large"
+                                style="margin-left: -15px; width: 215%; background-color: red;">No</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-2 queue-1">
+                        <svg class="svg q-el">
+                            <circle cx="45" cy="60" r="40" style="fill: #003da0;"/>
+                        </svg>
+                        <div class="row btn-row">
+                        </div>
+                    </div>
+                    <div class="col-2 queue-2">
+                        <svg class="svg q-el">
+                            <text x="25", y="65">
+                                00:05
+                            </text>
+                            <circle cx="45" cy="60" r="40" stroke="red" stroke-width="3" fill="none"/>
+                            <rect x="94" y="0" rx="3" ry="3" width="5" height="130" style="fill: black;"/>
+                        </svg>
+                        <div class="row btn-row">
+                            <button type="button" id="trade" class="btn btn-large"
+                            style="margin-left: 20px;">Trade</button>
+                        </div>
+                    </div>
+                <!-- <div class="row" style="height: 60px; color: red; text-align: center;">
+                    <div class="col-12">
+                        Alert messages appear here
+                    </div>
+                </div> -->
+                </div>
+            </div>
+            
+            <!-- service room -->
+            <div class="col-4 service">
+                <div class="row infobar" style="margin-bottom: 60px;">
+                    <div class="col-7 infocol infoborder">
+                        Accumulated: <br>
+                        $0.00
+                    </div>
+                    <div class="col-5 infocol" style="font-size: 40px;">
+                        00:35
+                    </div>
+                </div>
+                <div class="row" style="height: 130px;">
+                    <div class="col-4">
+                        <svg class="svg"> 
+                            <circle cx="45"; cy="60"; r="40";/>
+                        </svg>
+                    </div>
+                    <div class="col-4">
+                        <svg class="svg">
+                            <circle cx="45" cy="60" r="40"/>
+                        </svg>
+                    </div>
+                    <div class="col-4">
+                        <svg class="svg">
+                            <circle cx="45" cy="60" r="40"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="row" style="height: 130px;">
+                    <div class="col-4">
+                        <svg class="svg"> 
+                            <circle cx="45" cy="60" r="40"/>
+                        </svg>
+                    </div>
+                    <div class="col-4">
+                        <svg class="svg">
+                            <circle cx="45" cy="60" r="40"/>
+                        </svg>
+                    </div>
+                    <div class="col-4">
+                        <svg class="svg">
+                            <circle cx="45" cy="60" r="40"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
