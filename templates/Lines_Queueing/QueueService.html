@@ -4,20 +4,31 @@
 {% comment %}
     <!--
     Eli Pandolfo <epandolf@ucsc.edu>
+
+    Otree redwood:
+        if you call any function that calls 'swapChannel.send()' in the plain javascript or within
+        the Vue machine, you will get an error saying swapChannel does not have a method called
+        send.
+
+        However, if you call the function from the HTML or from a function that runs automatically
+        such as window.onload, it works fine.
     -->
 {% endcomment %}
 
 {% block scripts %}
+
+    <script src="{% static "js/vue.js" %}"></script>
     <script type='text/javascript'>
         // time when user enters the queue room
         // might want to change this to when all players arrive
         window.onload = function () {
             document.getElementById('arrive_time').value = (new Date()).toISOString()
+            vm.update()
         }
         
         // time when a player enters the service room 
         time_sr = function() {
-            document.getElementById('arrive_time').value = (new Date()).toISOString()
+            document.getElementById('service_time').value = (new Date()).toISOString()
         }
 
         // Boilerplate that lets you access useful oTree template variables from Javascript.
@@ -37,9 +48,9 @@
             {% endif %}
         })();
 
-        // Get the decision component and other-decision element.
-        var decision = document.querySelector("redwood-decision");
-        var otherDecision = document.getElementById("other-decision");
+        // // Get the decision component and other-decision element.
+        // var decision = document.querySelector("redwood-decision");
+        // var otherDecision = document.getElementById("other-decision");
 
         // Log period start/end to the JavaScript console.
         document.querySelector("redwood-period").addEventListener('period-start', function(event) {
@@ -49,15 +60,74 @@
             console.log('period ended');
         });
 
-        // When group decisions changes, update the text of the otherDecision element.
+        // //When group decisions changes, update the text of the otherDecision element.
         // decision.addEventListener('group-decisions-changed', function(event) {
         //     otherDecision.innerText = decision.otherDecision;
         // });
 
-        // Attach this to a button onclick event to set your decision when the button is clicked.
-        function setDecision(d) {
-            decision.myDecision = d;
-        }
+        // // Attach this to a button onclick event to set your decision when the button is clicked.
+        // function setDecision(d) {
+        //     decision.myDecision = d;
+        // }
+
+        var vm = new Vue({
+            delimiters: ['{', '}'],
+            el: '#app',
+            data: {
+                // player data
+                pay_rate: {{ pay_rate_ | json }},
+                service_time: {{ service_time_ | json }},
+                time_remaining_queue: null,
+                ID: {{ id | json }},
+
+                //group data
+                num_players: {{ num_players_ | json }},
+                position: {{ start_pos_ | json }},
+                in_trade: false, // state
+                requested: null, // person
+                requesting: null, // person
+                time_remaining_session: {{ round_time_ | json }},
+                accumulated: 0.00,
+                accepted: 2,
+                current_alert: null,
+                alert_duration: 3, //duration in s an alert is shown
+                alert_fadeout: 1.5, // duration in s an alert fades out
+                g_data: {{ data | json}},
+                swapChannel : document.getElementById('swapChannel')
+            },
+            mounted: function() {
+                // adds event listener to check for events sent by server over swapChannel
+                this.swapChannel.addEventListener('event', function(event) {
+                    console.log(event.detail.channel) // "swap"
+                    //console.log(event.detail.timestamp)
+                    console.log(event.detail.payload) // test_order
+
+                    this.g_data = event.detail.payload
+                })
+                
+            },
+            methods: {
+                // first, sends g_data to server
+                // state machine in server changes relevant fields then sends data back to client
+                // eventListener sets received payload to g_data
+                update : function() {
+                    this.swapChannel.send(this.g_data)
+                    // g_data has now been updated by server
+                    var p = this.g_data[this.ID]
+                    // is this getting parsed with json??
+                    // JSON.parse(g_data)
+                    this.position = p.pos
+                    this.in_trade = p.in_trade
+                    this.requested = p.requested
+                    this.requesting = p.requesting
+                    this.accepted = p.accepted
+                    this.current_alert = p.alert
+                    //now, with reactivity, all of these fields should update in the html
+                    //need to do some logic that updates the actual html from here
+                }
+            }
+        })
+
     </script>
 
     <!--Import the redwood-decision and redwood-period webcomponents.-->
@@ -65,9 +135,6 @@
         href="/static/otree-redwood/webcomponents/redwood-decision/redwood-decision.html">
     <link rel="import"
         href="/static/otree-redwood/webcomponents/redwood-period/redwood-period.html">
-
-    <script src="{% static "js/vue.js" %}"></script>
-    <script src="{% static "js/Queue.js" %}"></script>
 
 {% endblock %}
 
@@ -117,7 +184,7 @@
         .q-el {
 
         }
-        .top-row {
+        .padded-row {
             margin-top: 30px;
         }
         .service {
@@ -160,7 +227,10 @@
 
     <redwood-period></redwood-period>
     <redwood-decision></redwood-decision>
-    <redwood-channel></redwood-channel>
+    <redwood-channel
+        id="swapChannel"
+        channel="swap">
+    </redwood-channel>
 
     <div id="app">
         <div class="row" style="height: 620px;">
@@ -168,15 +238,15 @@
                 <div class="row infobar">
                     <div class="col-2 infocol infoborder">
                         Round: <br>
-                        1
+                        {{ round_ }}
                     </div>
                     <div class="col-3 infocol infoborder">
                         Pay Rate: <br>
-                        $0.00 / second
+                        ${ pay_rate } / second
                     </div>
                     <div class="col-3 infocol infoborder">
-                        Time remaining in queue: <br>
-                        00:00
+                        Service Time: <br>
+                        { service_time }
                     </div>
                     <div class="col-2 infocol infoborder">
                         Accumulated: <br>
@@ -184,22 +254,22 @@
                     </div>
                     <div class="col-2 infocol" style="font-size: 45px;
                         border-bottom: solid; border-width: 1px; border-color: #bbbbbb">
-                        00:35
+                        { time_remaining_session }
                     </div>
                 </div>
                 <div class="row alertbar">
                     <div class="col-8">
-                        Alert messages appear here
+                        { current_alert }
                     </div>
                 </div>
                 <div class="row" style="height: 530px;">
                     <div class="col-8 queue" style="border-width: 1px">
                         <div class="row" style="height: 528px;">
                             <div class="col-2 queue-1">
-                                <div class="row top-row">
+                                <div class="row padded-row">
                                     <svg class="svg q-el"> 
                                         <circle cx="45" cy="60" r="40"/>
-                                        <text x="40", y="65">
+                                        <text x="40" y="65">
                                             6
                                         </text>
                                     </svg>
@@ -214,10 +284,10 @@
                                         <button type="button" id="trade" class="btn btn-large btn-no">No</button>
                                     </div>
                                 </div>
-                                <div class="row top-row">
+                                <div class="row padded-row">
                                     <svg class="svg q-el"> 
                                         <circle cx="45" cy="60" r="40"/>
-                                        <text x="40", y="65">
+                                        <text x="40" y="65">
                                             7
                                         </text>
                                     </svg>
@@ -234,10 +304,10 @@
                                 </div>
                             </div>
                             <div class="col-2 queue-2">
-                                <div class="row top-row">
+                                <div class="row padded-row">
                                     <svg class="svg q-el"> 
                                         <circle cx="45" cy="60" r="40"/>
-                                        <text x="40", y="65">
+                                        <text x="40" y="65">
                                             5
                                         </text>
                                     </svg>
@@ -252,10 +322,10 @@
                                         <button type="button" id="trade" class="btn btn-large btn-no">No</button>
                                     </div>
                                 </div>
-                                <div class="row top-row">
+                                <div class="row padded-row">
                                     <svg class="svg q-el"> 
                                         <circle cx="45" cy="60" r="40"/>
-                                        <text x="40", y="65">
+                                        <text x="40" y="65">
                                             8
                                         </text>
                                     </svg>
@@ -272,10 +342,10 @@
                                 </div>
                             </div>
                             <div class="col-2 queue-1">
-                                <div class="row top-row">
+                                <div class="row padded-row">
                                     <svg class="svg q-el"> 
                                         <circle cx="45" cy="60" r="40"/>
-                                        <text x="40", y="65">
+                                        <text x="40" y="65">
                                             4
                                         </text>
                                     </svg>
@@ -290,10 +360,10 @@
                                         <button type="button" id="trade" class="btn btn-large btn-no">No</button>
                                     </div>
                                 </div>
-                                <div class="row top-row">
+                                <div class="row padded-row">
                                     <svg class="svg q-el"> 
                                         <circle cx="45" cy="60" r="40"/>
-                                        <text x="40", y="65">
+                                        <text x="40" y="65">
                                             9
                                         </text>
                                     </svg>
@@ -310,10 +380,10 @@
                                 </div>
                             </div>
                             <div class="col-2 queue-2">
-                                <div class="row top-row">
+                                <div class="row padded-row">
                                     <svg class="svg q-el"> 
                                         <circle cx="45" cy="60" r="40"/>
-                                        <text x="40", y="65">
+                                        <text x="40" y="65">
                                             3
                                         </text>
                                     </svg>
@@ -328,10 +398,10 @@
                                         <button type="button" id="trade" class="btn btn-large btn-no">No</button>
                                     </div>
                                 </div>
-                                <div class="row top-row">
+                                <div class="row padded-row">
                                     <svg class="svg q-el"> 
                                         <circle cx="45" cy="60" r="40"/>
-                                        <text x="35", y="65">
+                                        <text x="35" y="65">
                                             10
                                         </text>
                                     </svg>
@@ -348,10 +418,10 @@
                                 </div>
                             </div>
                             <div class="col-2 queue-1">
-                                <div class="row top-row">
+                                <div class="row padded-row">
                                     <svg class="svg q-el">
                                         <circle cx="45" cy="60" r="40" style="fill: #545353;"/>
-                                        <text x="40", y="65" style="fill: whitesmoke;">
+                                        <text x="40" y="65" style="fill: whitesmoke;">
                                             2
                                         </text>
                                     </svg>
@@ -368,10 +438,10 @@
                                 </div>
                             </div>
                             <div class="col-2 queue-2">
-                                <div class="row top-row">
+                                <div class="row padded-row">
                                     <svg class="svg q-el">
                                         <circle cx="45" cy="60" r="40" stroke="red" stroke-width="3" fill="none"/>
-                                        <text x="25", y="65">
+                                        <text x="25" y="65">
                                             00:05
                                         </text>
                                         <rect x="94" y="0" rx="3" ry="3" width="5" height="130" style="fill: #545353;"/>
@@ -391,28 +461,10 @@
                         </div>
                     </div>
             
-                    <!-- service room -->
                     <div class="col-4 service">
                         <div class="row" style="height: 528px;">
                             <div class="col-12">
-                                <div class="row top-row" style="height: 100px;">
-                                    <div class="col-4">
-                                        <svg class="svg-s"> 
-                                            <circle cx="45"; cy="60"; r="40";/>
-                                        </svg>
-                                    </div>
-                                    <div class="col-4">
-                                        <svg class="svg-s">
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
-                                    <div class="col-4">
-                                        <svg class="svg-s">
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="row top-row" style="height: 100px;">
+                                <div class="row padded-row" style="height: 100px;">
                                     <div class="col-4">
                                         <svg class="svg-s"> 
                                             <circle cx="45" cy="60" r="40"/>
@@ -429,7 +481,7 @@
                                         </svg>
                                     </div>
                                 </div>
-                                <div class="row top-row" style="height: 100px;">
+                                <div class="row padded-row" style="height: 100px;">
                                     <div class="col-4">
                                         <svg class="svg-s"> 
                                             <circle cx="45" cy="60" r="40"/>
@@ -446,7 +498,24 @@
                                         </svg>
                                     </div>
                                 </div>
-                                <div class="row top-row" style="height: 100px;">
+                                <div class="row padded-row" style="height: 100px;">
+                                    <div class="col-4">
+                                        <svg class="svg-s"> 
+                                            <circle cx="45" cy="60" r="40"/>
+                                        </svg>
+                                    </div>
+                                    <div class="col-4">
+                                        <svg class="svg-s">
+                                            <circle cx="45" cy="60" r="40"/>
+                                        </svg>
+                                    </div>
+                                    <div class="col-4">
+                                        <svg class="svg-s">
+                                            <circle cx="45" cy="60" r="40"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="row padded-row" style="height: 100px;">
                                     <div class="col-4">
                                         <svg class="svg-s"> 
                                             <circle cx="45" cy="60" r="40"/>
@@ -471,6 +540,19 @@
     - need to assign IDs to all buttons
         same respective ID for all yes, no, and trade buttons since only 1 of each can be displayed at one time
     - need to assign IDs to all circles since any and call could be displayed
+
+    Useful to know
+        IDs:
+            yes button: 'yes'
+            no button: 'no'
+            trade button: 'trade'
+            queue circles: 'qc1', 'qc2' ...
+
+    - when players are in trade, the trade button will not be clickable
+
+    TODO:
+        make all the html line up with all the JS
+        finish the update function, adding logic for which html elements should be affected by changes in g_data
 
 {% endcomment %}
 

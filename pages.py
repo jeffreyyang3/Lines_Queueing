@@ -1,5 +1,5 @@
 from ._builtin import Page, WaitPage
-
+from .models import Constants
 '''
 Eli Pandolfo <epandolf@ucsc.edu>
 '''
@@ -24,8 +24,17 @@ class QueueService(Page):
     form_model = 'player'
     form_fields = ['time_Queue']
 
-    # def vars_for_template(self):
-        # return {}
+    def vars_for_template(self):
+        return {
+            'round_time_': Constants.period_length,
+            'pay_rate_': self.participant.vars['pay_rate'],
+            'service_time_': self.participant.vars['service_time'],
+            'start_pos_': self.participant.vars['start_pos'],
+            'round_': self.round_number,
+            'num_players_': Constants.num_players,
+            'data': self.session.vars[self.participant.vars['group']],
+            'id': self.player.id_in_group
+        }
 
 
 class Results(Page):
