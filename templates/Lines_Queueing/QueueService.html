@@ -2,17 +2,27 @@
 {% load staticfiles otree %}
 
 {% comment %}
-    <!--
+    
     Eli Pandolfo <epandolf@ucsc.edu>
 
     Otree redwood:
-        if you call any function that calls 'swapChannel.send()' in the plain javascript or within
-        the Vue machine, you will get an error saying swapChannel does not have a method called
+        if you call any function that calls 'channel.send()' in the plain javascript or within
+        the Vue machine, you will get an error saying channel does not have a method called
         send.
 
         However, if you call the function from the HTML or from a function that runs automatically
         such as window.onload, it works fine.
-    -->
+
+    As of latest tested commit 5-17-18:
+        -   redwood is functional
+        -   any issues related to latency are not known/tested
+        -   all packets sent across the swap channel update the vm, but this has not been thoroughly
+            tested
+        -   the vm data has all fields that (I think) it will need
+        -   about half of the dynamically rendered html is dynamically rendered; need to add IDs
+            and display toggles for most elements
+
+    
 {% endcomment %}
 
 {% block scripts %}
@@ -23,6 +33,9 @@
         // might want to change this to when all players arrive
         window.onload = function () {
             document.getElementById('arrive_time').value = (new Date()).toISOString()
+            
+            // initial data is sent to the server and back, default values of the vm should
+            // be the same as the data that gets returned. Is this necessary then?
             vm.update()
         }
         
@@ -48,10 +61,6 @@
             {% endif %}
         })();
 
-        // // Get the decision component and other-decision element.
-        // var decision = document.querySelector("redwood-decision");
-        // var otherDecision = document.getElementById("other-decision");
-
         // Log period start/end to the JavaScript console.
         document.querySelector("redwood-period").addEventListener('period-start', function(event) {
             console.log('period started');
@@ -59,16 +68,6 @@
         document.querySelector("redwood-period").addEventListener('period-end', function(event) {
             console.log('period ended');
         });
-
-        // //When group decisions changes, update the text of the otherDecision element.
-        // decision.addEventListener('group-decisions-changed', function(event) {
-        //     otherDecision.innerText = decision.otherDecision;
-        // });
-
-        // // Attach this to a button onclick event to set your decision when the button is clicked.
-        // function setDecision(d) {
-        //     decision.myDecision = d;
-        // }
 
         var vm = new Vue({
             delimiters: ['{', '}'],
@@ -92,12 +91,12 @@
                 current_alert: null,
                 alert_duration: 3, //duration in s an alert is shown
                 alert_fadeout: 1.5, // duration in s an alert fades out
-                g_data: {{ data | json}},
-                swapChannel : document.getElementById('swapChannel')
+                g_data: {{ data | json }},
+                channel : document.getElementById('channel')
             },
             mounted: function() {
-                // adds event listener to check for events sent by server over swapChannel
-                this.swapChannel.addEventListener('event', function(event) {
+                // adds event listener to check for events sent by server over channel
+                this.channel.addEventListener('event', function(event) {
                     console.log(event.detail.channel) // "swap"
                     //console.log(event.detail.timestamp)
                     console.log(event.detail.payload) // test_order
@@ -111,7 +110,7 @@
                 // state machine in server changes relevant fields then sends data back to client
                 // eventListener sets received payload to g_data
                 update : function() {
-                    this.swapChannel.send(this.g_data)
+                    this.channel.send(this.g_data)
                     // g_data has now been updated by server
                     var p = this.g_data[this.ID]
                     // is this getting parsed with json??
@@ -228,7 +227,7 @@
     <redwood-period></redwood-period>
     <redwood-decision></redwood-decision>
     <redwood-channel
-        id="swapChannel"
+        id="channel"
         channel="swap">
     </redwood-channel>
 
@@ -250,7 +249,7 @@
                     </div>
                     <div class="col-2 infocol infoborder">
                         Accumulated: <br>
-                        $0.00
+                        ${ accumulated.toFixed(2) }
                     </div>
                     <div class="col-2 infocol" style="font-size: 45px;
                         border-bottom: solid; border-width: 1px; border-color: #bbbbbb">
