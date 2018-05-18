@@ -176,7 +176,7 @@ class Subsession(BaseSubsession):
             for p in g.get_players():
                 p.participant.vars['pay_rate'] = 0.55 # $
                 p.participant.vars['service_time'] = 30 # seconds
-                p.participant.vars['start_pos'] = 3
+                p.participant.vars['start_pos'] = 6
                 p.participant.vars['group'] = g_index
                 p_data = {
                     'id': p.id_in_group,

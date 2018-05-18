@@ -36,7 +36,7 @@
             
             // initial data is sent to the server and back, default values of the vm should
             // be the same as the data that gets returned. Is this necessary then?
-            vm.update()
+            //vm.update()
         }
         
         // time when a player enters the service room 
@@ -69,6 +69,40 @@
             console.log('period ended');
         });
 
+        Vue.component( 'q-bubble', {
+            delimiters: ['{', '}'],
+            props: ['num_players', 'comp_pos', 'self_pos'],
+            template: `
+                <div v-if="num_players >= 6">
+                    <div class="row padded-row">
+                        <svg class="svg q-el"> 
+                            <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
+                            <circle cx="45" cy="60" r="40" style="fill: #545353;" 
+                                v-if="comp_pos == self_pos"/>
+                            <text x="40" y="65" v-if="comp_pos != self_pos">
+                                { comp_pos }
+                            </text>
+                            <text x="40" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
+                                { comp_pos }
+                            </text>
+                            <rect x="94" y="0" rx="3" ry="3" width="5" height="130"
+                                style="fill: #545353;" v-if="comp_pos == 1"/>
+                        </svg>
+                    </div>
+                    <div class="row btn-row">
+                        <button type="button" id="trade" class="btn btn-large"
+                        style="margin-left: 20px;">Trade</button>
+                        <div class="col-6">
+                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                        </div>
+                        <div class="col-6">
+                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                        </div>
+                    </div>
+                </div>
+            `
+        })
+
         var vm = new Vue({
             delimiters: ['{', '}'],
             el: '#app',
@@ -80,7 +114,7 @@
                 ID: {{ id | json }},
 
                 //group data
-                num_players: {{ num_players_ | json }},
+                num_players: 10,//{{ num_players_ | json }},
                 position: {{ start_pos_ | json }},
                 in_trade: false, // state
                 requested: null, // person
@@ -111,7 +145,13 @@
                 // eventListener sets received payload to g_data
                 update : function() {
                     this.channel.send(this.g_data)
+                    // assuming something knows to wait until the response is received,
                     // g_data has now been updated by server
+                    // if it is not waiting, we can make a toggle that gets turned off after the send
+                    // and turned on by the event listener, with the following code not run until
+                    // the toggle is true. This would need code to run in parallel, so idk if that
+                    // is done by default or there is something more complex going on.
+                    // listener
                     var p = this.g_data[this.ID]
                     // is this getting parsed with json??
                     // JSON.parse(g_data)
@@ -265,174 +305,197 @@
                     <div class="col-8 queue" style="border-width: 1px">
                         <div class="row" style="height: 528px;">
                             <div class="col-2 queue-1">
-                                <div class="row padded-row">
-                                    <svg class="svg q-el"> 
-                                        <circle cx="45" cy="60" r="40"/>
-                                        <text x="40" y="65">
-                                            6
-                                        </text>
-                                    </svg>
-                                </div>
-                                <div class="row btn-row">
-                                    <button type="button" id="trade" class="btn btn-large"
-                                    style="margin-left: 20px;">Trade</button>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                <!-- <div v-if="num_players >= 6">
+                                    <div class="row padded-row" v-if="num_players >= 6">
+                                        <svg class="svg q-el"> 
+                                            <circle cx="45" cy="60" r="40"/>
+                                            <text x="40" y="65">
+                                                6
+                                            </text>
+                                        </svg>
                                     </div>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                    <div class="row btn-row" v-if="num_players >= 6">
+                                        <button type="button" id="trade" class="btn btn-large"
+                                        style="margin-left: 20px;">Trade</button>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="row padded-row">
-                                    <svg class="svg q-el"> 
-                                        <circle cx="45" cy="60" r="40"/>
-                                        <text x="40" y="65">
-                                            7
-                                        </text>
-                                    </svg>
-                                </div>
-                                <div class="row btn-row">
-                                    <button type="button" id="trade" class="btn btn-large"
-                                    style="margin-left: 20px;">Trade</button>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                </div> -->
+                                <q-bubble
+                                    v-bind:num_players="num_players"
+                                    comp_pos="6"
+                                    v-bind:self_pos="position">
+                                </q-bubble>
+                                <div v-if="num_players >= 7">
+                                    <div class="row padded-row">
+                                        <svg class="svg q-el"> 
+                                            <circle cx="45" cy="60" r="40"/>
+                                            <text x="40" y="65">
+                                                7
+                                            </text>
+                                        </svg>
                                     </div>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-2 queue-2">
-                                <div class="row padded-row">
-                                    <svg class="svg q-el"> 
-                                        <circle cx="45" cy="60" r="40"/>
-                                        <text x="40" y="65">
-                                            5
-                                        </text>
-                                    </svg>
-                                </div>
-                                <div class="row btn-row">
-                                    <button type="button" id="trade" class="btn btn-large"
-                                    style="margin-left: 20px;">Trade</button>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                    </div>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                    </div>
-                                </div>
-                                <div class="row padded-row">
-                                    <svg class="svg q-el"> 
-                                        <circle cx="45" cy="60" r="40"/>
-                                        <text x="40" y="65">
-                                            8
-                                        </text>
-                                    </svg>
-                                </div>
-                                <div class="row btn-row">
-                                    <button type="button" id="trade" class="btn btn-large"
-                                    style="margin-left: 20px;">Trade</button>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                    </div>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-2 queue-1">
-                                <div class="row padded-row">
-                                    <svg class="svg q-el"> 
-                                        <circle cx="45" cy="60" r="40"/>
-                                        <text x="40" y="65">
-                                            4
-                                        </text>
-                                    </svg>
-                                </div>
-                                <div class="row btn-row">
-                                    <button type="button" id="trade" class="btn btn-large"
-                                    style="margin-left: 20px;">Trade</button>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                    </div>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                    </div>
-                                </div>
-                                <div class="row padded-row">
-                                    <svg class="svg q-el"> 
-                                        <circle cx="45" cy="60" r="40"/>
-                                        <text x="40" y="65">
-                                            9
-                                        </text>
-                                    </svg>
-                                </div>
-                                <div class="row btn-row">
-                                    <button type="button" id="trade" class="btn btn-large"
-                                    style="margin-left: 20px;">Trade</button>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                    </div>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                    <div class="row btn-row">
+                                        <button type="button" id="trade" class="btn btn-large"
+                                        style="margin-left: 20px;">Trade</button>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-2 queue-2">
-                                <div class="row padded-row">
-                                    <svg class="svg q-el"> 
-                                        <circle cx="45" cy="60" r="40"/>
-                                        <text x="40" y="65">
-                                            3
-                                        </text>
-                                    </svg>
-                                </div>
-                                <div class="row btn-row">
-                                    <button type="button" id="trade" class="btn btn-large"
-                                    style="margin-left: 20px;">Trade</button>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                <div v-if="num_players >= 5">
+                                    <div class="row padded-row">
+                                        <svg class="svg q-el"> 
+                                            <circle cx="45" cy="60" r="40"/>
+                                            <text x="40" y="65">
+                                                5
+                                            </text>
+                                        </svg>
                                     </div>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                    <div class="row btn-row">
+                                        <button type="button" id="trade" class="btn btn-large"
+                                        style="margin-left: 20px;">Trade</button>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="row padded-row">
-                                    <svg class="svg q-el"> 
-                                        <circle cx="45" cy="60" r="40"/>
-                                        <text x="35" y="65">
-                                            10
-                                        </text>
-                                    </svg>
-                                </div>
-                                <div class="row btn-row">
-                                    <button type="button" id="trade" class="btn btn-large"
-                                    style="margin-left: 20px;">Trade</button>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                <div v-if="num_players >= 8">
+                                    <div class="row padded-row">
+                                        <svg class="svg q-el"> 
+                                            <circle cx="45" cy="60" r="40"/>
+                                            <text x="40" y="65">
+                                                8
+                                            </text>
+                                        </svg>
                                     </div>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                    <div class="row btn-row">
+                                        <button type="button" id="trade" class="btn btn-large"
+                                        style="margin-left: 20px;">Trade</button>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-2 queue-1">
-                                <div class="row padded-row">
-                                    <svg class="svg q-el">
-                                        <circle cx="45" cy="60" r="40" style="fill: #545353;"/>
-                                        <text x="40" y="65" style="fill: whitesmoke;">
-                                            2
-                                        </text>
-                                    </svg>
-                                </div>
-                                <div class="row btn-row">
-                                    <button type="button" id="trade" class="btn btn-large"
-                                    style="margin-left: 20px;">Trade</button>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                <div v-if="num_players >= 4">
+                                    <div class="row padded-row">
+                                        <svg class="svg q-el"> 
+                                            <circle cx="45" cy="60" r="40"/>
+                                            <text x="40" y="65">
+                                                4
+                                            </text>
+                                        </svg>
                                     </div>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                    <div class="row btn-row">
+                                        <button type="button" id="trade" class="btn btn-large"
+                                        style="margin-left: 20px;">Trade</button>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-if="num_players >= 9">
+                                    <div class="row padded-row">
+                                        <svg class="svg q-el"> 
+                                            <circle cx="45" cy="60" r="40"/>
+                                            <text x="40" y="65">
+                                                9
+                                            </text>
+                                        </svg>
+                                    </div>
+                                    <div class="row btn-row">
+                                        <button type="button" id="trade" class="btn btn-large"
+                                        style="margin-left: 20px;">Trade</button>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-2 queue-2">
+                                <div v-if="num_players >= 3">
+                                    <div class="row padded-row">
+                                        <svg class="svg q-el"> 
+                                            <circle cx="45" cy="60" r="40"/>
+                                            <text x="40" y="65">
+                                                3
+                                            </text>
+                                        </svg>
+                                    </div>
+                                    <div class="row btn-row">
+                                        <button type="button" id="trade" class="btn btn-large"
+                                        style="margin-left: 20px;">Trade</button>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-if="num_players >= 10">
+                                    <div class="row padded-row">
+                                        <svg class="svg q-el"> 
+                                            <circle cx="45" cy="60" r="40"/>
+                                            <text x="35" y="65">
+                                                10
+                                            </text>
+                                        </svg>
+                                    </div>
+                                    <div class="row btn-row">
+                                        <button type="button" id="trade" class="btn btn-large"
+                                        style="margin-left: 20px;">Trade</button>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-2 queue-1">
+                                <div v-if="num_players >= 2">
+                                    <div class="row padded-row">
+                                        <svg class="svg q-el">
+                                            <circle cx="45" cy="60" r="40" style="fill: #545353;"/>
+                                            <text x="40" y="65" style="fill: whitesmoke;">
+                                                2
+                                            </text>
+                                        </svg>
+                                    </div>
+                                    <div class="row btn-row">
+                                        <button type="button" id="trade" class="btn btn-large"
+                                        style="margin-left: 20px;">Trade</button>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -440,8 +503,8 @@
                                 <div class="row padded-row">
                                     <svg class="svg q-el">
                                         <circle cx="45" cy="60" r="40" stroke="red" stroke-width="3" fill="none"/>
-                                        <text x="25" y="65">
-                                            00:05
+                                        <text x="40" y="65">
+                                            1
                                         </text>
                                         <rect x="94" y="0" rx="3" ry="3" width="5" height="130" style="fill: #545353;"/>
                                     </svg>
