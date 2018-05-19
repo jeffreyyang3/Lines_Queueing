@@ -69,20 +69,21 @@
             console.log('period ended');
         });
 
+        
         Vue.component( 'q-bubble', {
             delimiters: ['{', '}'],
-            props: ['num_players', 'comp_pos', 'self_pos'],
+            props: ['num_players', 'comp_pos', 'self_pos', 'requested'],
             template: `
-                <div v-if="num_players >= 6">
+                <div v-if="num_players >= comp_pos">
                     <div class="row padded-row">
                         <svg class="svg q-el"> 
                             <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
                             <circle cx="45" cy="60" r="40" style="fill: #545353;" 
                                 v-if="comp_pos == self_pos"/>
-                            <text x="40" y="65" v-if="comp_pos != self_pos">
+                            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
                                 { comp_pos }
                             </text>
-                            <text x="40" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
+                            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
                                 { comp_pos }
                             </text>
                             <rect x="94" y="0" rx="3" ry="3" width="5" height="130"
@@ -91,14 +92,33 @@
                     </div>
                     <div class="row btn-row">
                         <button type="button" id="trade" class="btn btn-large"
-                        style="margin-left: 20px;">Trade</button>
+                            style="margin-left: 20px;" v-if="comp_pos == self_pos - 1"
+                            v-on:click="$emit('request', comp_pos)">Trade</button>
                         <div class="col-6">
-                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
+                            <button type="button" id="trade" class="btn btn-large btn-yes"
+                                v-if="comp_pos == self_pos + 1 && requested != null"
+                                onclick="vm.respond(1)">Yes</button>
                         </div>
                         <div class="col-6">
-                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
+                            <button type="button" id="trade" class="btn btn-large btn-no"
+                                v-if="comp_pos == self_pos + 1 && requested != null"
+                                onclick="vm.respond(0)">No</button>
                         </div>
                     </div>
+                </div>
+            `
+        })
+
+        Vue.component( 's-bubble', {
+            delimiters: ['{', '}'],
+            props: ['num_players', 'comp_pos', 'self_pos'],
+            template: `
+                <div class="col-4" v-if="num_players >= comp_pos">
+                    <svg class="svg-s"> 
+                        <circle cx="45" cy="60" r="40" style="fill: #545353;"
+                            v-if="comp_pos == self_pos"/>
+                        <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
+                    </svg>
                 </div>
             `
         })
@@ -106,45 +126,57 @@
         var vm = new Vue({
             delimiters: ['{', '}'],
             el: '#app',
-            data: {
-                // player data
-                pay_rate: {{ pay_rate_ | json }},
-                service_time: {{ service_time_ | json }},
-                time_remaining_queue: null,
-                ID: {{ id | json }},
+            data: function() {
+                return {
+                    // player data
+                    pay_rate: {{ pay_rate_ | json }},
+                    service_time: {{ service_time_ | json }},
+                    time_remaining_queue: null,
+                    ID: {{ id | json }},
+                    served: false,
 
-                //group data
-                num_players: 10,//{{ num_players_ | json }},
-                position: {{ start_pos_ | json }},
-                in_trade: false, // state
-                requested: null, // person
-                requesting: null, // person
-                time_remaining_session: {{ round_time_ | json }},
-                accumulated: 0.00,
-                accepted: 2,
-                current_alert: null,
-                alert_duration: 3, //duration in s an alert is shown
-                alert_fadeout: 1.5, // duration in s an alert fades out
-                g_data: {{ data | json }},
-                channel : document.getElementById('channel')
+                    //group data
+                    num_players: {{ num_players_ | json }},
+                    num_players_queue: {{ num_players_ | json }},
+                    num_players_service: 0,
+                    position: {{ start_pos_ | json }},
+                    in_trade: false, // state
+                    requested: null, // person
+                    requesting: null, // person
+                    time_remaining_session: {{ round_time_ | json }},
+                    accumulated: 0.00,
+                    accepted: 2,
+                    current_alert: null,
+                    alert_duration: 3, //duration in s an alert is shown
+                    alert_fadeout: 1.5, // duration in s an alert fades out
+                    channel : document.getElementById('channel')
+                }
             },
             mounted: function() {
-                // adds event listener to check for events sent by server over channel
-                this.channel.addEventListener('event', function(event) {
-                    console.log(event.detail.channel) // "swap"
-                    //console.log(event.detail.timestamp)
-                    console.log(event.detail.payload) // test_order
-
-                    this.g_data = event.detail.payload
-                })
                 
             },
             methods: {
+
+                request: function(pos) {
+                    for(var p in g_data) {
+                        if (g_data.hasOwnProperty(p)) {
+                            if(g_data[p]['pos'] == pos)
+                                g_data[this.ID]['requesting'] = g_data[p]['id']
+                        }
+                    }   
+                    this.update()
+                },
+
+                respond: function(yesno) {
+                    g_data[this.ID]['accepted'] = yesno
+                    this.update()
+                },
+
                 // first, sends g_data to server
                 // state machine in server changes relevant fields then sends data back to client
                 // eventListener sets received payload to g_data
-                update : function() {
-                    this.channel.send(this.g_data)
+                update: function() {
+                    this.channel.send(g_data)
                     // assuming something knows to wait until the response is received,
                     // g_data has now been updated by server
                     // if it is not waiting, we can make a toggle that gets turned off after the send
@@ -152,20 +184,33 @@
                     // the toggle is true. This would need code to run in parallel, so idk if that
                     // is done by default or there is something more complex going on.
                     // listener
-                    var p = this.g_data[this.ID]
-                    // is this getting parsed with json??
-                    // JSON.parse(g_data)
-                    this.position = p.pos
-                    this.in_trade = p.in_trade
-                    this.requested = p.requested
-                    this.requesting = p.requesting
-                    this.accepted = p.accepted
-                    this.current_alert = p.alert
-                    //now, with reactivity, all of these fields should update in the html
-                    //need to do some logic that updates the actual html from here
+                    
                 }
             }
         })
+
+        var g_data = {{ data | json }}
+
+        // adds event listener to check for events sent by server over channel
+        vm.channel.addEventListener('event', function(event) {
+            console.log(event.detail.channel) // "swap"
+            //console.log(event.detail.timestamp)
+            console.log((new Date()).toISOString())
+            console.log(event.detail.payload) // test_order
+
+            g_data = event.detail.payload
+
+            var p = g_data[vm.ID]
+            vm.position = p.pos
+            vm.in_trade = p.in_trade
+            vm.requested = p.requested
+            vm.requesting = p.requesting
+            vm.accepted = p.accepted
+            vm.current_alert = p.alert
+            //now, with reactivity, all of these fields should update in the html
+            //need to do some logic that updates the actual html from here
+        })
+
 
     </script>
 
@@ -285,7 +330,7 @@
                     </div>
                     <div class="col-3 infocol infoborder">
                         Service Time: <br>
-                        { service_time }
+                        { service_time } seconds
                     </div>
                     <div class="col-2 infocol infoborder">
                         Accumulated: <br>
@@ -305,220 +350,86 @@
                     <div class="col-8 queue" style="border-width: 1px">
                         <div class="row" style="height: 528px;">
                             <div class="col-2 queue-1">
-                                <!-- <div v-if="num_players >= 6">
-                                    <div class="row padded-row" v-if="num_players >= 6">
-                                        <svg class="svg q-el"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                            <text x="40" y="65">
-                                                6
-                                            </text>
-                                        </svg>
-                                    </div>
-                                    <div class="row btn-row" v-if="num_players >= 6">
-                                        <button type="button" id="trade" class="btn btn-large"
-                                        style="margin-left: 20px;">Trade</button>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                        </div>
-                                    </div>
-                                </div> -->
                                 <q-bubble
-                                    v-bind:num_players="num_players"
+                                    v-bind:num_players="num_players_queue"
                                     comp_pos="6"
-                                    v-bind:self_pos="position">
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-on:request="request">
                                 </q-bubble>
-                                <div v-if="num_players >= 7">
-                                    <div class="row padded-row">
-                                        <svg class="svg q-el"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                            <text x="40" y="65">
-                                                7
-                                            </text>
-                                        </svg>
-                                    </div>
-                                    <div class="row btn-row">
-                                        <button type="button" id="trade" class="btn btn-large"
-                                        style="margin-left: 20px;">Trade</button>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="7"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-on:request="request">
+                                </q-bubble>
                             </div>
                             <div class="col-2 queue-2">
-                                <div v-if="num_players >= 5">
-                                    <div class="row padded-row">
-                                        <svg class="svg q-el"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                            <text x="40" y="65">
-                                                5
-                                            </text>
-                                        </svg>
-                                    </div>
-                                    <div class="row btn-row">
-                                        <button type="button" id="trade" class="btn btn-large"
-                                        style="margin-left: 20px;">Trade</button>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-if="num_players >= 8">
-                                    <div class="row padded-row">
-                                        <svg class="svg q-el"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                            <text x="40" y="65">
-                                                8
-                                            </text>
-                                        </svg>
-                                    </div>
-                                    <div class="row btn-row">
-                                        <button type="button" id="trade" class="btn btn-large"
-                                        style="margin-left: 20px;">Trade</button>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="5"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="8"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-on:request="request">
+                                </q-bubble>
                             </div>
                             <div class="col-2 queue-1">
-                                <div v-if="num_players >= 4">
-                                    <div class="row padded-row">
-                                        <svg class="svg q-el"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                            <text x="40" y="65">
-                                                4
-                                            </text>
-                                        </svg>
-                                    </div>
-                                    <div class="row btn-row">
-                                        <button type="button" id="trade" class="btn btn-large"
-                                        style="margin-left: 20px;">Trade</button>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-if="num_players >= 9">
-                                    <div class="row padded-row">
-                                        <svg class="svg q-el"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                            <text x="40" y="65">
-                                                9
-                                            </text>
-                                        </svg>
-                                    </div>
-                                    <div class="row btn-row">
-                                        <button type="button" id="trade" class="btn btn-large"
-                                        style="margin-left: 20px;">Trade</button>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="4"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="9"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-on:request="request">
+                                </q-bubble>
                             </div>
                             <div class="col-2 queue-2">
-                                <div v-if="num_players >= 3">
-                                    <div class="row padded-row">
-                                        <svg class="svg q-el"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                            <text x="40" y="65">
-                                                3
-                                            </text>
-                                        </svg>
-                                    </div>
-                                    <div class="row btn-row">
-                                        <button type="button" id="trade" class="btn btn-large"
-                                        style="margin-left: 20px;">Trade</button>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-if="num_players >= 10">
-                                    <div class="row padded-row">
-                                        <svg class="svg q-el"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                            <text x="35" y="65">
-                                                10
-                                            </text>
-                                        </svg>
-                                    </div>
-                                    <div class="row btn-row">
-                                        <button type="button" id="trade" class="btn btn-large"
-                                        style="margin-left: 20px;">Trade</button>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="3"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="10"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-on:request="request">
+                                </q-bubble>
                             </div>
                             <div class="col-2 queue-1">
-                                <div v-if="num_players >= 2">
-                                    <div class="row padded-row">
-                                        <svg class="svg q-el">
-                                            <circle cx="45" cy="60" r="40" style="fill: #545353;"/>
-                                            <text x="40" y="65" style="fill: whitesmoke;">
-                                                2
-                                            </text>
-                                        </svg>
-                                    </div>
-                                    <div class="row btn-row">
-                                        <button type="button" id="trade" class="btn btn-large"
-                                        style="margin-left: 20px;">Trade</button>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="2"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-on:request="request">
+                                </q-bubble>
                             </div>
                             <div class="col-2 queue-2">
-                                <div class="row padded-row">
-                                    <svg class="svg q-el">
-                                        <circle cx="45" cy="60" r="40" stroke="red" stroke-width="3" fill="none"/>
-                                        <text x="40" y="65">
-                                            1
-                                        </text>
-                                        <rect x="94" y="0" rx="3" ry="3" width="5" height="130" style="fill: #545353;"/>
-                                    </svg>
-                                </div>
-                                <div class="row btn-row">
-                                    <button type="button" id="trade" class="btn btn-large"
-                                    style="margin-left: 20px;">Trade</button>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-yes">Yes</button>
-                                    </div>
-                                    <div class="col-6">
-                                        <button type="button" id="trade" class="btn btn-large btn-no">No</button>
-                                    </div>
-                                </div>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="1"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-on:request="request">
+                                </q-bubble>
                             </div>
                         </div>
                     </div>
@@ -527,62 +438,62 @@
                         <div class="row" style="height: 528px;">
                             <div class="col-12">
                                 <div class="row padded-row" style="height: 100px;">
-                                    <div class="col-4">
-                                        <svg class="svg-s"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
-                                    <div class="col-4">
-                                        <svg class="svg-s">
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
-                                    <div class="col-4">
-                                        <svg class="svg-s">
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="1"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="2"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="3"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
                                 </div>
                                 <div class="row padded-row" style="height: 100px;">
-                                    <div class="col-4">
-                                        <svg class="svg-s"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
-                                    <div class="col-4">
-                                        <svg class="svg-s">
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
-                                    <div class="col-4">
-                                        <svg class="svg-s">
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="4"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="5"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="6"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
                                 </div>
                                 <div class="row padded-row" style="height: 100px;">
-                                    <div class="col-4">
-                                        <svg class="svg-s"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
-                                    <div class="col-4">
-                                        <svg class="svg-s">
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
-                                    <div class="col-4">
-                                        <svg class="svg-s">
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="7"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="8"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="9"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
                                 </div>
                                 <div class="row padded-row" style="height: 100px;">
-                                    <div class="col-4">
-                                        <svg class="svg-s"> 
-                                            <circle cx="45" cy="60" r="40"/>
-                                        </svg>
-                                    </div>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="10"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
                                 </div>
                             </div>
                         </div>

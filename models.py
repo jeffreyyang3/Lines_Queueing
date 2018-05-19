@@ -19,7 +19,7 @@ class Constants(BaseConstants):
     # can this vary? 
     players_per_group = 2
 
-    num_players = 10
+    num_players = 2
 
     # combined length in seconds players are in the queue room and the payoff room
     # 240 seconds = 4 minutes. There are 2 different rooms players can be in
@@ -38,6 +38,14 @@ class Constants(BaseConstants):
         'unv_other': 'You cannot request to swap with this person until they resolve their current swap',
         'none': ''
     }
+
+    config = [
+        # each inner list is a group
+        [
+            {'start_pos': 1, 'pay_rate': 0.55, 'service_time': 30},
+            {'start_pos': 2, 'pay_rate': 0.45, 'service_time': 20}
+        ]
+    ]
 
 # player attributes:
     # - time for all pages
@@ -113,7 +121,7 @@ class Group(RedwoodGroup):
 
     def _on_swap_event(self, event=None, **kwargs):
 
-        # print(event.value)
+        print(event.value)
         for p in self.get_players():
 
             # relies on only one thing being changed every click, we'll see what happens when two people click at nearly the same time
@@ -127,19 +135,19 @@ class Group(RedwoodGroup):
             # Note that the JS will prevent anyone in trade from requesting another trade
             p1 = event.value[str(p.id_in_group)]
             if not p1['in_trade'] and p1['requesting'] != None:
-                p2 = event.value[p1['requesting']]
+                p2 = event.value[str(p1['requesting'])]
                 if not p2['in_trade']:
                     p1['in_trade'] = True
                     p2['in_trade'] = True
                     p2['requested'] = p1['id']
                     p1['alert'] = Constants.alert_messages['requesting']
-                    p2['alert_messages'] = Constants.alert_messages['requested']
-                    event.value[p1['requesting']] = p2
+                    p2['alert'] = Constants.alert_messages['requested']
+                    event.value[str(p1['requesting'])] = p2
                 else:
                     p1['requesting'] = None
                     p1['alert'] = Constants.alert_messages['unv_other']
             elif p1['in_trade']:
-                p2 = event.value[p1['requested']]
+                p2 = event.value[str(p1['requested'])]
                 if p1['accepted'] == 0:
                     p1['in_trade'] = False
                     p2['in_trade'] = False
@@ -173,10 +181,11 @@ class Subsession(BaseSubsession):
 
         for g_index, g in enumerate(self.get_groups()):
             self.session.vars[g_index] = {}
+            g_data = Constants.config[g_index]
             for p in g.get_players():
-                p.participant.vars['pay_rate'] = 0.55 # $
-                p.participant.vars['service_time'] = 30 # seconds
-                p.participant.vars['start_pos'] = 6
+                p.participant.vars['pay_rate'] = g_data[p.id_in_group - 1]['pay_rate']
+                p.participant.vars['service_time'] = g_data[p.id_in_group - 1]['service_time']
+                p.participant.vars['start_pos'] = g_data[p.id_in_group - 1]['start_pos']
                 p.participant.vars['group'] = g_index
                 p_data = {
                     'id': p.id_in_group,
@@ -186,6 +195,7 @@ class Subsession(BaseSubsession):
                     'requesting': None, # clicking a trade button changes this value
                     'accepted': 2, # 2 is None, 1 is True, 0 is False; clicking a yes/no button changes this value
                     'alert': Constants.alert_messages['none'],
+                    'served': False,
                     'metadata': None
                 }
                 self.session.vars[g_index][p.id_in_group] = p_data
