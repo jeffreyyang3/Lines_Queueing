@@ -3,7 +3,7 @@ from otree.api import (
     Currency as c, currency_range
 )
 from otree_redwood.models import Group as RedwoodGroup
-#from otree.api import BaseGroup as DecisionGroup
+from . import config as config_py
 
 '''
 Eli Pandolfo <epandolf@ucsc.edu>
@@ -13,13 +13,13 @@ otree-redwood>=0.7.0
 class Constants(BaseConstants):
 
     name_in_url = 'Lines_Queueing'
-    num_rounds = 1
     participation_fee = c(5)
 
-    # can this vary? 
-    players_per_group = 2
-
-    num_players = 2
+    config = config_py.export_data()
+    
+    num_rounds = len(config[0])
+    players_per_group = len(config[0][0])
+    num_players = sum([len(group[0]) for group in config])
 
     # combined length in seconds players are in the queue room and the payoff room
     # 240 seconds = 4 minutes. There are 2 different rooms players can be in
@@ -140,11 +140,11 @@ class Subsession(BaseSubsession):
 
         for g_index, g in enumerate(self.get_groups()):
             self.session.vars[g_index] = {}
-            g_data = Constants.config[g_index]
+            g_data = Constants.config[g_index][self.round_number - 1]
             for p in g.get_players():
                 p.participant.vars['pay_rate'] = g_data[p.id_in_group - 1]['pay_rate']
                 p.participant.vars['service_time'] = g_data[p.id_in_group - 1]['service_time']
-                p.participant.vars['start_pos'] = g_data[p.id_in_group - 1]['start_pos']
+                p.participant.vars['start_pos'] = p.id_in_group
                 p.participant.vars['group'] = g_index
                 p_data = {
                     'id': p.id_in_group,
