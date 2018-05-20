@@ -5,23 +5,13 @@
     
     Eli Pandolfo <epandolf@ucsc.edu>
 
-    Otree redwood:
+    otree redwood:
         if you call any function that calls 'channel.send()' in the plain javascript or within
         the Vue machine, you will get an error saying channel does not have a method called
         send.
 
         However, if you call the function from the HTML or from a function that runs automatically
         such as window.onload, it works fine.
-
-    As of latest tested commit 5-17-18:
-        -   redwood is functional
-        -   any issues related to latency are not known/tested
-        -   all packets sent across the swap channel update the vm, but this has not been thoroughly
-            tested
-        -   the vm data has all fields that (I think) it will need
-        -   about half of the dynamically rendered html is dynamically rendered; need to add IDs
-            and display toggles for most elements
-
     
 {% endcomment %}
 
@@ -33,15 +23,11 @@
         // might want to change this to when all players arrive
         window.onload = function () {
             document.getElementById('arrive_time').value = (new Date()).toISOString()
-            
-            // initial data is sent to the server and back, default values of the vm should
-            // be the same as the data that gets returned. Is this necessary then?
-            //vm.update()
         }
         
         // time when a player enters the service room 
         time_sr = function() {
-            document.getElementById('service_time').value = (new Date()).toISOString()
+            document.getElementById('sr_time').value = (new Date()).toISOString()
         }
 
         // Boilerplate that lets you access useful oTree template variables from Javascript.
@@ -69,14 +55,13 @@
             console.log('period ended');
         });
 
-        
         Vue.component( 'q-bubble', {
             delimiters: ['{', '}'],
-            props: ['num_players', 'comp_pos', 'self_pos', 'requested'],
+            props: ['num_players', 'comp_pos', 'self_pos', 'requested', 'in_trade'],
             template: `
                 <div v-if="num_players >= comp_pos">
                     <div class="row padded-row">
-                        <svg class="svg q-el"> 
+                        <svg class="svg"> 
                             <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
                             <circle cx="45" cy="60" r="40" style="fill: #545353;" 
                                 v-if="comp_pos == self_pos"/>
@@ -91,16 +76,19 @@
                         </svg>
                     </div>
                     <div class="row btn-row">
-                        <button type="button" id="trade" class="btn btn-large"
-                            style="margin-left: 20px;" v-if="comp_pos == self_pos - 1"
+                        <button type="button" class="btn btn-large"
+                            style="margin-left: 20px;" v-if="comp_pos == self_pos - 1 && !in_trade"
                             v-on:click="$emit('request', comp_pos)">Trade</button>
+                        <button type="button" class="btn btn-large"
+                            style="margin-left: 20px;" v-if="comp_pos == self_pos - 1 && in_trade"
+                            disabled>Trade</button>
                         <div class="col-6">
-                            <button type="button" id="trade" class="btn btn-large btn-yes"
+                            <button type="button" class="btn btn-large btn-yes"
                                 v-if="comp_pos == self_pos + 1 && requested != null"
                                 onclick="vm.respond(1)">Yes</button>
                         </div>
                         <div class="col-6">
-                            <button type="button" id="trade" class="btn btn-large btn-no"
+                            <button type="button" class="btn btn-large btn-no"
                                 v-if="comp_pos == self_pos + 1 && requested != null"
                                 onclick="vm.respond(0)">No</button>
                         </div>
@@ -113,7 +101,7 @@
             delimiters: ['{', '}'],
             props: ['num_players', 'comp_pos', 'self_pos'],
             template: `
-                <div class="col-4" v-if="num_players >= comp_pos">
+                <div class="col-4" v-if="num_players >= -comp_pos + 1">
                     <svg class="svg-s"> 
                         <circle cx="45" cy="60" r="40" style="fill: #545353;"
                             v-if="comp_pos == self_pos"/>
@@ -131,11 +119,13 @@
                     // player data
                     pay_rate: {{ pay_rate_ | json }},
                     service_time: {{ service_time_ | json }},
-                    time_remaining_queue: null,
+                    time_spent_in_front: 0,
                     ID: {{ id | json }},
                     served: false,
 
                     //group data
+                    start_time: null,
+                    now: null,
                     num_players: {{ num_players_ | json }},
                     num_players_queue: {{ num_players_ | json }},
                     num_players_service: 0,
@@ -143,17 +133,75 @@
                     in_trade: false, // state
                     requested: null, // person
                     requesting: null, // person
-                    time_remaining_session: {{ round_time_ | json }},
+                    period_length: {{ round_time_ | json }},
                     accumulated: 0.00,
                     accepted: 2,
-                    current_alert: null,
-                    alert_duration: 3, //duration in s an alert is shown
-                    alert_fadeout: 1.5, // duration in s an alert fades out
+                    current_alert: '',
+                    alert_duration: 3.5, //duration in s an alert is shown
+                    alert_fadeout: 1, // duration in s an alert fades out
+                    alert_opacity: 1,
+                    dur: 0,
+                    alert_interval: null,
+                    last_event: null,
                     channel : document.getElementById('channel')
                 }
             },
-            mounted: function() {
-                
+            created: function() {
+                this.start_time = parseInt(new Date().getTime() / 1000)
+
+                setInterval(function() {
+                    this.now = parseInt(new Date().getTime() / 1000)
+                }.bind(this), 999) // assume a 1 ms delay for all information transit and logic
+            },
+            // computed functions get called every time one of their dependencies changes
+            computed: {
+                // everytime this.now changes (once per second), this function is called
+                time_remaining_period: function() {
+                    return this.period_length - (this.now - this.start_time)
+                }
+            },
+            // watch functions are called every time the property associated with the function name
+            // changes
+            watch: {
+                last_event: function() {
+                    clearInterval(this.alert_interval)
+                    this.dur = 0
+                    this.alert_opacity = 1
+                    this.alert_interval = setInterval( function() {
+                        if(this.dur >= this.alert_duration) {
+                            this.current_alert = ''
+                            clearInterval(this.alert_interval)
+                        }
+                        else if(this.dur >= this.alert_duration - this.alert_fadeout) {
+                            this.alert_opacity = 1 - (this.dur - (this.alert_duration - this.alert_fadeout))
+                            this.dur += 0.01
+                        }
+                        else {
+                            this.dur += 0.01
+                        }
+                    }.bind(this), 10)
+                    //alert_interval = setInterval(fadeout(), 10)
+                },
+                // gets called every time this.now is updated, every second
+                now: function() {
+                    console.log(this.time_spent_in_front)
+                    if(this.served == true) {
+                        this.accumulated += this.pay_rate
+                    }
+                    else {
+                        if(this.position == 1) {
+                            if(this.time_spent_in_front == this.service_time - 1) {
+                                this.next()
+                                time_sr()
+                                this.served = true
+                            }
+                            else {
+                                this.time_spent_in_front += 1
+                            }
+                        }
+                        
+                    }
+                }
             },
             methods: {
 
@@ -172,30 +220,36 @@
                     this.update()
                 },
 
-                // first, sends g_data to server
+                next: function() {
+                    for(var p in g_data) {
+                        if (g_data.hasOwnProperty(p)) {
+                            g_data[p]['pos']--
+                            g_data[p]['num_players_queue']--
+                            g_data[p]['num_players_service']++
+                            g_data[p]['next'] = true
+                        }
+                    }
+                    this.update()
+                },
+
+                // sends g_data to server
                 // state machine in server changes relevant fields then sends data back to client
                 // eventListener sets received payload to g_data
                 update: function() {
                     this.channel.send(g_data)
-                    // assuming something knows to wait until the response is received,
-                    // g_data has now been updated by server
-                    // if it is not waiting, we can make a toggle that gets turned off after the send
-                    // and turned on by the event listener, with the following code not run until
-                    // the toggle is true. This would need code to run in parallel, so idk if that
-                    // is done by default or there is something more complex going on.
-                    // listener
-                    
                 }
             }
         })
 
+        //
         var g_data = {{ data | json }}
 
         // adds event listener to check for events sent by server over channel
         vm.channel.addEventListener('event', function(event) {
+            
+            // for debugging
             console.log(event.detail.channel) // "swap"
-            //console.log(event.detail.timestamp)
-            console.log((new Date()).toISOString())
+            console.log(new Date().getTime())
             console.log(event.detail.payload) // test_order
 
             g_data = event.detail.payload
@@ -207,6 +261,9 @@
             vm.requesting = p.requesting
             vm.accepted = p.accepted
             vm.current_alert = p.alert
+            vm.num_players_queue = p.num_players_queue
+            vm.num_players_service = p.num_players_service
+            vm.last_event = parseInt(new Date().getTime() / 1000)
             //now, with reactivity, all of these fields should update in the html
             //need to do some logic that updates the actual html from here
         })
@@ -265,9 +322,6 @@
         .queue-2 {
             background-color: #fbfbfb;
         }
-        .q-el {
-
-        }
         .padded-row {
             margin-top: 30px;
         }
@@ -287,6 +341,9 @@
         }
         .btn-no {
             margin-left: -15px; width: 220%; background-color: #e23f36;
+        }
+        .otree-timer {
+            display: none;
         }
         circle {
             stroke: #545353;
@@ -308,9 +365,10 @@
 {% block content %}
     <!--form field for page load time-->
     <input type="hidden" name="time_Queue" id="arrive_time" />
+    <input type="hidden" name="time_Service" id="sr_time" />
+
 
     <redwood-period></redwood-period>
-    <redwood-decision></redwood-decision>
     <redwood-channel
         id="channel"
         channel="swap">
@@ -338,11 +396,11 @@
                     </div>
                     <div class="col-2 infocol" style="font-size: 45px;
                         border-bottom: solid; border-width: 1px; border-color: #bbbbbb">
-                        { time_remaining_session }
+                        { time_remaining_period }
                     </div>
                 </div>
                 <div class="row alertbar">
-                    <div class="col-8">
+                    <div class="col-8" v-bind:style="{ opacity: alert_opacity }">
                         { current_alert }
                     </div>
                 </div>
@@ -355,14 +413,16 @@
                                     comp_pos="6"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request">
+                                    v-on:request="request"
+                                    v-bind:in_trade="in_trade">
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="7"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request">
+                                    v-on:request="request"
+                                    v-bind:in_trade="in_trade">
                                 </q-bubble>
                             </div>
                             <div class="col-2 queue-2">
@@ -371,14 +431,16 @@
                                     comp_pos="5"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request">
+                                    v-on:request="request"
+                                    v-bind:in_trade="in_trade">
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="8"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request">
+                                    v-on:request="request"
+                                    v-bind:in_trade="in_trade">
                                 </q-bubble>
                             </div>
                             <div class="col-2 queue-1">
@@ -387,14 +449,16 @@
                                     comp_pos="4"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request">
+                                    v-on:request="request"
+                                    v-bind:in_trade="in_trade">
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="9"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request">
+                                    v-on:request="request"
+                                    v-bind:in_trade="in_trade">
                                 </q-bubble>
                             </div>
                             <div class="col-2 queue-2">
@@ -403,14 +467,16 @@
                                     comp_pos="3"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request">
+                                    v-on:request="request"
+                                    v-bind:in_trade="in_trade">
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="10"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request">
+                                    v-on:request="request"
+                                    v-bind:in_trade="in_trade">
                                 </q-bubble>
                             </div>
                             <div class="col-2 queue-1">
@@ -419,7 +485,8 @@
                                     comp_pos="2"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request">
+                                    v-on:request="request"
+                                    v-bind:in_trade="in_trade">
                                 </q-bubble>
                             </div>
                             <div class="col-2 queue-2">
@@ -428,7 +495,8 @@
                                     comp_pos="1"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request">
+                                    v-on:request="request"
+                                    v-bind:in_trade="in_trade">
                                 </q-bubble>
                             </div>
                         </div>
@@ -440,58 +508,58 @@
                                 <div class="row padded-row" style="height: 100px;">
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
-                                        comp_pos="1"
+                                        comp_pos=""
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
-                                        comp_pos="2"
+                                        comp_pos="-1"
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
-                                        comp_pos="3"
-                                        v-bind:self_pos="position">
-                                    </s-bubble>
-                                </div>
-                                <div class="row padded-row" style="height: 100px;">
-                                    <s-bubble
-                                        v-bind:num_players="num_players_service"
-                                        comp_pos="4"
-                                        v-bind:self_pos="position">
-                                    </s-bubble>
-                                    <s-bubble
-                                        v-bind:num_players="num_players_service"
-                                        comp_pos="5"
-                                        v-bind:self_pos="position">
-                                    </s-bubble>
-                                    <s-bubble
-                                        v-bind:num_players="num_players_service"
-                                        comp_pos="6"
+                                        comp_pos="-2"
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                 </div>
                                 <div class="row padded-row" style="height: 100px;">
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
-                                        comp_pos="7"
+                                        comp_pos="-3"
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
-                                        comp_pos="8"
+                                        comp_pos="-4"
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
-                                        comp_pos="9"
+                                        comp_pos="-5"
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                 </div>
                                 <div class="row padded-row" style="height: 100px;">
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
-                                        comp_pos="10"
+                                        comp_pos="-6"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-7"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-8"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                </div>
+                                <div class="row padded-row" style="height: 100px;">
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-9"
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                 </div>
@@ -507,26 +575,13 @@
 
 {% comment %}
 
-    - need to adjust size of all top-bottom margins and heights of all outer elements to enlarge and contract with the number of participants
-        for example, if there are 6 or less, eliminate 3rd and 4th row and center all elements
-    - need to have all text dynamically generated
-    - need to assign IDs to all buttons
-        same respective ID for all yes, no, and trade buttons since only 1 of each can be displayed at one time
-    - need to assign IDs to all circles since any and call could be displayed
+    -   might adjust height of all elements dynamically. going to test in the leeps lab to see if that 
+        is necessary
+    -   metadata
+    -   returned form fields
+    -   config
 
-    Useful to know
-        IDs:
-            yes button: 'yes'
-            no button: 'no'
-            trade button: 'trade'
-            queue circles: 'qc1', 'qc2' ...
-
-    - when players are in trade, the trade button will not be clickable
-
-    TODO:
-        make all the html line up with all the JS
-        finish the update function, adding logic for which html elements should be affected by changes in g_data
-
+        
 {% endcomment %}
 
 
