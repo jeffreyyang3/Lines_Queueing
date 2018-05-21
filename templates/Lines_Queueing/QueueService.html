@@ -22,12 +22,12 @@
         // time when user enters the queue room
         // might want to change this to when all players arrive
         window.onload = function () {
-            document.getElementById('arrive_time').value = (new Date()).toISOString()
+            document.getElementById('arrive_time').value = new Date().toISOString()
         }
         
         // time when a player enters the service room 
         time_sr = function() {
-            document.getElementById('sr_time').value = (new Date()).toISOString()
+            document.getElementById('sr_time').value = new Date().toISOString()
         }
 
         // Boilerplate that lets you access useful oTree template variables from Javascript.
@@ -116,6 +116,7 @@
             el: '#app',
             data: function() {
                 return {
+
                     // player data
                     pay_rate: {{ pay_rate_ | json }},
                     service_time: {{ service_time_ | json }},
@@ -137,6 +138,7 @@
                     accumulated: 0.00,
                     accepted: 2,
                     current_alert: '',
+                    display_alert: '',
                     alert_duration: 3.5, //duration in s an alert is shown
                     alert_fadeout: 1, // duration in s an alert fades out
                     alert_opacity: 1,
@@ -158,18 +160,23 @@
                 // everytime this.now changes (once per second), this function is called
                 time_remaining_period: function() {
                     return this.period_length - (this.now - this.start_time)
+                },
+                h: function() {
+                    return this.num_players > 6 ? window.innerHeight : window.innerHeight * 0.55
                 }
             },
             // watch functions are called every time the property associated with the function name
             // changes
             watch: {
-                last_event: function() {
+                current_alert: function() {
                     clearInterval(this.alert_interval)
+                    console.log(this.current_alert)
+                    this.display_alert = this.current_alert
                     this.dur = 0
                     this.alert_opacity = 1
                     this.alert_interval = setInterval( function() {
                         if(this.dur >= this.alert_duration) {
-                            this.current_alert = ''
+                            this.display_alert = ''
                             clearInterval(this.alert_interval)
                         }
                         else if(this.dur >= this.alert_duration - this.alert_fadeout) {
@@ -180,11 +187,11 @@
                             this.dur += 0.01
                         }
                     }.bind(this), 10)
-                    //alert_interval = setInterval(fadeout(), 10)
+                    alert_interval = setInterval(fadeout(), 10)
                 },
+
                 // gets called every time this.now is updated, every second
                 now: function() {
-                    console.log(this.time_spent_in_front)
                     if(this.served == true) {
                         this.accumulated += this.pay_rate
                     }
@@ -204,7 +211,6 @@
                 }
             },
             methods: {
-
                 request: function(pos) {
                     for(var p in g_data) {
                         if (g_data.hasOwnProperty(p)) {
@@ -249,7 +255,8 @@
             
             // for debugging
             console.log(event.detail.channel) // "swap"
-            console.log(new Date().getTime())
+            //console.log(new Date().getTime())
+            //console.log(event.detail.timestamp)
             console.log(event.detail.payload) // test_order
 
             g_data = event.detail.payload
@@ -363,9 +370,12 @@
 {% endblock %}
 
 {% block content %}
-    <!--form field for page load time-->
+    <!-- django form inputs -->
     <input type="hidden" name="time_Queue" id="arrive_time" />
     <input type="hidden" name="time_Service" id="sr_time" />
+    <input type="hidden" name="service_time" v-model="service_time" />
+    <input type="hidden" name="pay_rate" v-model="pay_rate" />
+    <input type="hidden" name="accumulated" v-model="accumulated" />
 
 
     <redwood-period></redwood-period>
@@ -375,7 +385,7 @@
     </redwood-channel>
 
     <div id="app">
-        <div class="row" style="height: 620px;">
+        <div class="row" v-bind:style="{ height: .775 * h + 'px;' }">
             <div class="col-12">
                 <div class="row infobar">
                     <div class="col-2 infocol infoborder">
@@ -401,12 +411,12 @@
                 </div>
                 <div class="row alertbar">
                     <div class="col-8" v-bind:style="{ opacity: alert_opacity }">
-                        { current_alert }
+                        { display_alert }
                     </div>
                 </div>
-                <div class="row" style="height: 530px;">
+                <div class="row" v-bind:style="{ height: .6625 * h + 'px;' }">
                     <div class="col-8 queue" style="border-width: 1px">
-                        <div class="row" style="height: 528px;">
+                        <div class="row" v-bind:style="{ height: (.6625 * h - 2) + 'px' }">
                             <div class="col-2 queue-1">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
@@ -501,9 +511,8 @@
                             </div>
                         </div>
                     </div>
-            
                     <div class="col-4 service">
-                        <div class="row" style="height: 528px;">
+                        <div class="row" v-bind:style="{ height: (.6625 * h - 2) + 'px' }">
                             <div class="col-12">
                                 <div class="row padded-row" style="height: 100px;">
                                     <s-bubble
@@ -522,7 +531,8 @@
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                 </div>
-                                <div class="row padded-row" style="height: 100px;">
+                                <div class="row padded-row" style="height: 100px;"
+                                        v-if="num_players > 3">
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
                                         comp_pos="-3"
@@ -539,7 +549,8 @@
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                 </div>
-                                <div class="row padded-row" style="height: 100px;">
+                                <div class="row padded-row" style="height: 100px;"
+                                        v-if="num_players > 6">
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
                                         comp_pos="-6"
@@ -556,10 +567,21 @@
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                 </div>
-                                <div class="row padded-row" style="height: 100px;">
+                                <div class="row padded-row" style="height: 100px;"
+                                        v-if="num_players > 9">
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
                                         comp_pos="-9"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-10"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-11"
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                 </div>
@@ -574,13 +596,21 @@
 {% endblock %}
 
 {% comment %}
-
-    -   might adjust height of all elements dynamically. going to test in the leeps lab to see if that 
-        is necessary
+    
+    - nultiple rounds
+    
+    - gray out trade button if they are in a trade
+    -   test html rendering in leeps lab
     -   metadata
-    -   returned form fields
-    -   config
+            returned form fields
 
+            player
+                original pos
+            
+            group
+                every request
+                accept, time, etc
+                state of queue after request
         
 {% endcomment %}
 

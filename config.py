@@ -12,25 +12,25 @@ import random
 data =  [
             [ # Group 1
                 [ # Period 1
-                    { 'pay_rate': 0.05, 'service_time': 20},
-                    { 'pay_rate': 0.04, 'service_time': 30},
-                    { 'pay_rate': 0.03, 'service_time': 10},
+                    {'s':1, 'pay_rate': 0.05, 'service_time': 1000},
+                    {'s':2, 'pay_rate': 0.04, 'service_time': 1000},
+                    {'s':3, 'pay_rate': 0.03, 'service_time': 1000},
                     # { 'pay_rate': 0.05, 'service_time': 30},
                     # { 'pay_rate': 0.06, 'service_time': 30},
                     # { 'pay_rate': 0.07, 'service_time': 30},
                     # { 'pay_rate': 0.08, 'service_time': 13},
                     # { 'pay_rate': 0.20, 'service_time': 10},
                 ],
-                [ # Period 2
-                    { 'pay_rate': 0.03, 'service_time': 20},
-                    { 'pay_rate': 0.05, 'service_time': 30},
-                    { 'pay_rate': 0.06, 'service_time': 30},
-                    # { 'pay_rate': 0.07, 'service_time': 30},
-                    # { 'pay_rate': 0.08, 'service_time': 13},
-                    # { 'pay_rate': 0.20, 'service_time': 10},
-                    # { 'pay_rate': 0.01, 'service_time': 15},
-                    # { 'pay_rate': 0.03, 'service_time': 20},
-                ],
+                # [ # Period 2
+                #     { 'pay_rate': 0.03, 'service_time': 1000},
+                #     { 'pay_rate': 0.05, 'service_time': 1000},
+                #     { 'pay_rate': 0.06, 'service_time': 1000},
+                #     # { 'pay_rate': 0.07, 'service_time': 30},
+                #     # { 'pay_rate': 0.08, 'service_time': 13},
+                #     # { 'pay_rate': 0.20, 'service_time': 10},
+                #     # { 'pay_rate': 0.01, 'service_time': 15},
+                #     # { 'pay_rate': 0.03, 'service_time': 20},
+                # ],
             ],
             # [ # Group 2
             #     [ # Period 1
