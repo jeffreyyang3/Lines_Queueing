@@ -26,11 +26,13 @@ class QueueService(Page):
     # does this need to be group?
     form_model = 'player'
     form_fields = ['time_Queue', 'time_Service', 'service_time', 'pay_rate', 'accumulated']
-    timeout_seconds = Constants.period_length
+    
+    def get_timeout_seconds(self):
+        return Constants.period_lengths[self.round_number]
 
     def vars_for_template(self):
         return {
-            'round_time_': Constants.period_length,
+            'round_time_': Constants.period_lengths[self.round_number],
             'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
             'service_time_': self.participant.vars[self.round_number]['service_time'],
             'start_pos_': self.participant.vars[self.round_number]['start_pos'],

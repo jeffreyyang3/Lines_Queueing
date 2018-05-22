@@ -16,8 +16,8 @@ import random
     - each dictionary here. Rather, it keeps a person's starting position in the line consistant
     - with their pay rate and their service time
 
-    - If 
 '''
+period_lengths = [35, 45]
 data =  [
             [ # Group 1
                 [ # Period 1
@@ -90,6 +90,11 @@ def export_csv(fname, data):
 # exports data to models.py
 # formats data to make it easier for models.py to parse it
 def export_data():
-    return shuffle(data)
+    if len(period_lengths) != len(data[0]):
+        raise ValueError('Number of periods differs in data and period_lengths')
+    return shuffle(data), period_lengths
 
-{ 'pay_rate': 0.03, 'service_time': 20},
+'''
+Sample exported player dict:
+{ 'start_pos': 2, 'pay_rate': 0.03, 'service_time': 20},
+'''

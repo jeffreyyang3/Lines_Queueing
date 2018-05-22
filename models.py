@@ -15,17 +15,14 @@ class Constants(BaseConstants):
     name_in_url = 'Lines_Queueing'
     participation_fee = c(5)
 
-    config = config_py.export_data()
+    config, period_lengths = config_py.export_data()
+    # period lengths: combined length in seconds players are in the 
+    # queue room and the payoff room per period.
     
     num_rounds = len(config[0])
     num_players = sum([len(group[0]) for group in config])
     players_per_group = len(config[0][0])
 
-    # combined length in seconds players are in the queue room and the payoff room
-    # 240 seconds = 4 minutes. There are 2 different rooms players can be in
-    # during those 4 minutes, the queue room, where they are not accumulating money,
-    # and the payoff room, where they are accumulating money.
-    period_length = 35
 
     alert_messages = {
         'requested': 'You have been requested to swap',
@@ -69,7 +66,7 @@ class Group(RedwoodGroup):
     group_trades = models.LongStringField()
 
     def period_length(self):
-        return Constants.period_length
+        return Constants.period_lengths[self.round_number]
 
     def _on_swap_event(self, event=None, **kwargs):
 
