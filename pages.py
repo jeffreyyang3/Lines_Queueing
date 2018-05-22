@@ -31,20 +31,27 @@ class QueueService(Page):
     def vars_for_template(self):
         return {
             'round_time_': Constants.period_length,
-            'pay_rate_': self.participant.vars['pay_rate'],
-            'service_time_': self.participant.vars['service_time'],
-            'start_pos_': self.participant.vars['start_pos'],
+            'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
+            'service_time_': self.participant.vars[self.round_number]['service_time'],
+            'start_pos_': self.participant.vars[self.round_number]['start_pos'],
             'round_': self.round_number,
             'num_players_': Constants.num_players,
-            'data': self.session.vars[self.participant.vars['group']],
+            'data': self.session.vars[self.round_number][self.participant.vars[self.round_number]['group'] - 1],
             'id': self.player.id_in_group
         }
+
+class BetweenPages(Page):
+    form_model = 'player'
+    form_fields = ['time_BP']
+
+    def vars_for_template(self):
+        return {'round': self.round_number}
 
 class Results(Page):
     form_model = 'player'
     form_fields = ['time_Results']
 
-    def is_dispalyed(self):
+    def is_displayed(self):
         return self.round_number == Constants.num_rounds
 
 
@@ -54,5 +61,6 @@ page_sequence = [
     Instructions,
     QueueServiceWaitPage,
     QueueService,
+    BetweenPages,
     Results
 ]

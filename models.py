@@ -18,14 +18,14 @@ class Constants(BaseConstants):
     config = config_py.export_data()
     
     num_rounds = len(config[0])
-    players_per_group = len(config[0][0])
     num_players = sum([len(group[0]) for group in config])
+    players_per_group = len(config[0][0])
 
     # combined length in seconds players are in the queue room and the payoff room
     # 240 seconds = 4 minutes. There are 2 different rooms players can be in
     # during those 4 minutes, the queue room, where they are not accumulating money,
     # and the payoff room, where they are accumulating money.
-    period_length = 1000
+    period_length = 35
 
     alert_messages = {
         'requested': 'You have been requested to swap',
@@ -37,7 +37,8 @@ class Constants(BaseConstants):
         'unv_other': 'Requestee is currently in a trade',
         'next_self': 'You have entered the service room.',
         'next_queue': 'You have advanced one position in the queue',
-        'none': ''
+        'next_queue2': 'You have advanced one position in the queue ',
+        'none': '',
     }
 
 # player attributes:
@@ -53,6 +54,7 @@ class Player(BasePlayer):
     time_Instructions = models.LongStringField()
     time_Queue = models.LongStringField()
     time_Service = models.LongStringField()
+    time_BP = models.LongStringField()
     time_Results = models.LongStringField()
 
     service_time = models.FloatField() # this is the time it takes them to go thru door once first in line
@@ -82,14 +84,30 @@ class Group(RedwoodGroup):
             # case 2: person is not in_trade and requesting someone who is in_trade
             # case 3: person is in_trade and accepting
             # case 4: person is in_trade and denying
+            # add other cases for next
             # Note that the JS will prevent anyone in trade from requesting another trade
             
             p1 = event.value[str(p.id_in_group)]
             if p1['next'] == True:
                 if p1['pos'] == 0:
                     p1['alert'] = Constants.alert_messages['next_self']
+                    if p1['in_trade']: # requested != None
+                        p2_id = str(p1['requested'])
+                        p2 = event.value[p2_id]
+                        p1['in_trade'] = False
+                        p2['in_trade'] = False
+                        p1['requested'] = None
+                        p2['requesting'] = None
+                        p1['accepted'] = 2
+                        event.value[p2_id] = p2
                 elif p1['pos'] > 0:
-                    p1['alert'] = Constants.alert_messages['next_queue']
+                    if p1['alert'] == Constants.alert_messages['next_queue']:
+                        p1['alert'] = Constants.alert_messages['next_queue2']
+                    else:
+                        p1['alert'] = Constants.alert_messages['next_queue']
+                    # this is the only case I know of where you can get the same alert twice in a row (except none)
+                    # if you get the same alert twice in a row the alert will not display because the watch function
+                    # that displays alerts only get called when the alert changes.
                 else:
                     p1['alert'] = Constants.alert_messages['none']
                 p1['next'] = False
@@ -106,7 +124,8 @@ class Group(RedwoodGroup):
                     p1['requesting'] = None
                     p1['alert'] = Constants.alert_messages['unv_other']
             elif p1['in_trade'] and p1['requested'] != None:
-                p2 = event.value[str(p1['requested'])]
+                p2_id = str(p1['requested'])
+                p2 = event.value[p2_id]
                 if p1['accepted'] == 0:
                     p1['in_trade'] = False
                     p2['in_trade'] = False
@@ -126,7 +145,7 @@ class Group(RedwoodGroup):
                     p2['pos'] = temp
                     p1['alert'] = Constants.alert_messages['accepting']
                     p2['alert'] = Constants.alert_messages['accepted']
-                event.value[str(p1['requested'])] = p2
+                event.value[p2_id] = p2
             event.value[str(p.id_in_group)] = p1
 
         # broadcast the updated data out to all subjects
@@ -139,16 +158,19 @@ class Subsession(BaseSubsession):
         self.group_randomly()
 
         for g_index, g in enumerate(self.get_groups()):
-            self.session.vars[g_index] = {}
+            self.session.vars[self.round_number] = []
+            for i in range(Constants.num_rounds):
+                self.session.vars[self.round_number].append({})
             g_data = Constants.config[g_index][self.round_number - 1]
             for p in g.get_players():
-                p.participant.vars['pay_rate'] = g_data[p.id_in_group - 1]['pay_rate']
-                p.participant.vars['service_time'] = g_data[p.id_in_group - 1]['service_time']
-                p.participant.vars['start_pos'] = g_data[p.id_in_group - 1]['s']
-                p.participant.vars['group'] = g_index
+                p.participant.vars[self.round_number] = {}
+                p.participant.vars[self.round_number]['pay_rate'] = g_data[p.id_in_group - 1]['pay_rate']
+                p.participant.vars[self.round_number]['service_time'] = g_data[p.id_in_group - 1]['service_time']
+                p.participant.vars[self.round_number]['start_pos'] = g_data[p.id_in_group - 1]['start_pos']
+                p.participant.vars[self.round_number]['group'] = g_index
                 p_data = {
                     'id': p.id_in_group,
-                    'pos': p.participant.vars['start_pos'],
+                    'pos': p.participant.vars[self.round_number]['start_pos'],
                     'in_trade': False,
                     'requested': None,
                     'requesting': None, # clicking a trade button changes this value
@@ -159,7 +181,7 @@ class Subsession(BaseSubsession):
                     'next': False,
                     'metadata': None # might move this to be for the whole group, not for every player
                 }
-                self.session.vars[g_index][p.id_in_group] = p_data
+                self.session.vars[self.round_number][g_index - 1][p.id_in_group] = p_data
 
 
 

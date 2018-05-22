@@ -55,62 +55,6 @@
             console.log('period ended');
         });
 
-        Vue.component( 'q-bubble', {
-            delimiters: ['{', '}'],
-            props: ['num_players', 'comp_pos', 'self_pos', 'requested', 'in_trade'],
-            template: `
-                <div v-if="num_players >= comp_pos">
-                    <div class="row padded-row">
-                        <svg class="svg"> 
-                            <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
-                            <circle cx="45" cy="60" r="40" style="fill: #545353;" 
-                                v-if="comp_pos == self_pos"/>
-                            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
-                                { comp_pos }
-                            </text>
-                            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
-                                { comp_pos }
-                            </text>
-                            <rect x="94" y="0" rx="3" ry="3" width="5" height="130"
-                                style="fill: #545353;" v-if="comp_pos == 1"/>
-                        </svg>
-                    </div>
-                    <div class="row btn-row">
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 20px;" v-if="comp_pos == self_pos - 1 && !in_trade"
-                            v-on:click="$emit('request', comp_pos)">Trade</button>
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 20px;" v-if="comp_pos == self_pos - 1 && in_trade"
-                            disabled>Trade</button>
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-yes"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                onclick="vm.respond(1)">Yes</button>
-                        </div>
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-no"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                onclick="vm.respond(0)">No</button>
-                        </div>
-                    </div>
-                </div>
-            `
-        })
-
-        Vue.component( 's-bubble', {
-            delimiters: ['{', '}'],
-            props: ['num_players', 'comp_pos', 'self_pos'],
-            template: `
-                <div class="col-4" v-if="num_players >= -comp_pos + 1">
-                    <svg class="svg-s"> 
-                        <circle cx="45" cy="60" r="40" style="fill: #545353;"
-                            v-if="comp_pos == self_pos"/>
-                        <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
-                    </svg>
-                </div>
-            `
-        })
-
         var vm = new Vue({
             delimiters: ['{', '}'],
             el: '#app',
@@ -145,6 +89,18 @@
                     dur: 0,
                     alert_interval: null,
                     last_event: null,
+                    trade_allowed: { // these are positions not IDs
+                        1: true,
+                        2: true,
+                        3: true,
+                        4: true,
+                        5: true,
+                        6: true,
+                        7: true,
+                        8: true,
+                        9: true,
+                        10: true,
+                    },
                     channel : document.getElementById('channel')
                 }
             },
@@ -187,7 +143,6 @@
                             this.dur += 0.01
                         }
                     }.bind(this), 10)
-                    alert_interval = setInterval(fadeout(), 10)
                 },
 
                 // gets called every time this.now is updated, every second
@@ -205,10 +160,20 @@
                             else {
                                 this.time_spent_in_front += 1
                             }
-                        }
-                        
+                        }  
                     }
-                }
+                },
+                // used to determine whether buttons are clickable
+                last_event: function() {
+                    for(var p in g_data) {
+                        if (!this.in_trade && g_data.hasOwnProperty(p) && !g_data[p]['in_trade']) {
+                            this.trade_allowed[g_data[p]['pos']] = true
+                        }
+                        else {
+                            this.trade_allowed[g_data[p]['pos']] = false
+                        }
+                    }
+                },
             },
             methods: {
                 request: function(pos) {
@@ -247,7 +212,70 @@
             }
         })
 
-        //
+        // component for queue player representation
+        Vue.component( 'q-bubble', {
+            delimiters: ['{', '}'],
+            props: ['num_players', 'comp_pos', 'self_pos', 'requested'],
+            computed: {
+                trade_allowed: function() {
+                    return vm.trade_allowed[this.comp_pos]
+                }
+            },
+            template: `
+                <div v-if="num_players >= comp_pos">
+                    <div class="row padded-row">
+                        <svg class="svg"> 
+                            <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
+                            <circle cx="45" cy="60" r="40" style="fill: #545353;" 
+                                v-if="comp_pos == self_pos"/>
+                            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
+                                { comp_pos }
+                            </text>
+                            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
+                                { comp_pos }
+                            </text>
+                            <rect x="94" y="0" rx="3" ry="3" width="5" height="130"
+                                style="fill: #545353;" v-if="comp_pos == 1"/>
+                        </svg>
+                    </div>
+                    <div class="row btn-row">
+                        <button type="button" class="btn btn-large"
+                            style="margin-left: 20px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
+                            v-on:click="$emit('request', comp_pos)">Trade</button>
+                        <button type="button" class="btn btn-large"
+                            style="margin-left: 20px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
+                            disabled>Trade</button>
+                        <div class="col-6">
+                            <button type="button" class="btn btn-large btn-yes"
+                                v-if="comp_pos == self_pos + 1 && requested != null"
+                                onclick="vm.respond(1)">Yes</button>
+                        </div>
+                        <div class="col-6">
+                            <button type="button" class="btn btn-large btn-no"
+                                v-if="comp_pos == self_pos + 1 && requested != null"
+                                onclick="vm.respond(0)">No</button>
+                        </div>
+                    </div>
+                </div>
+            `
+        })
+
+        // component for service player representation
+        Vue.component( 's-bubble', {
+            delimiters: ['{', '}'],
+            props: ['num_players', 'comp_pos', 'self_pos'],
+            template: `
+                <div class="col-4" v-if="num_players >= -comp_pos + 1">
+                    <svg class="svg-s"> 
+                        <circle cx="45" cy="60" r="40" style="fill: #545353;"
+                            v-if="comp_pos == self_pos"/>
+                        <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
+                    </svg>
+                </div>
+            `
+        })
+
+        // all group data pertinent to swaps
         var g_data = {{ data | json }}
 
         // adds event listener to check for events sent by server over channel
@@ -423,16 +451,14 @@
                                     comp_pos="6"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request"
-                                    v-bind:in_trade="in_trade">
+                                    v-on:request="request">
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="7"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request"
-                                    v-bind:in_trade="in_trade">
+                                    v-on:request="request">
                                 </q-bubble>
                             </div>
                             <div class="col-2 queue-2">
@@ -441,16 +467,14 @@
                                     comp_pos="5"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request"
-                                    v-bind:in_trade="in_trade">
+                                    v-on:request="request">
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="8"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request"
-                                    v-bind:in_trade="in_trade">
+                                    v-on:request="request">
                                 </q-bubble>
                             </div>
                             <div class="col-2 queue-1">
@@ -459,16 +483,14 @@
                                     comp_pos="4"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request"
-                                    v-bind:in_trade="in_trade">
+                                    v-on:request="request">
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="9"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request"
-                                    v-bind:in_trade="in_trade">
+                                    v-on:request="request">
                                 </q-bubble>
                             </div>
                             <div class="col-2 queue-2">
@@ -477,16 +499,14 @@
                                     comp_pos="3"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request"
-                                    v-bind:in_trade="in_trade">
+                                    v-on:request="request">
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="10"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request"
-                                    v-bind:in_trade="in_trade">
+                                    v-on:request="request">
                                 </q-bubble>
                             </div>
                             <div class="col-2 queue-1">
@@ -495,8 +515,7 @@
                                     comp_pos="2"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request"
-                                    v-bind:in_trade="in_trade">
+                                    v-on:request="request">
                                 </q-bubble>
                             </div>
                             <div class="col-2 queue-2">
@@ -505,8 +524,7 @@
                                     comp_pos="1"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
-                                    v-on:request="request"
-                                    v-bind:in_trade="in_trade">
+                                    v-on:request="request">
                                 </q-bubble>
                             </div>
                         </div>
@@ -596,10 +614,11 @@
 {% endblock %}
 
 {% comment %}
+
+    - starting pos randomization
     
-    - nultiple rounds
-    
-    - gray out trade button if they are in a trade
+    -   multiple rounds
+
     -   test html rendering in leeps lab
     -   metadata
             returned form fields
@@ -611,6 +630,13 @@
                 every request
                 accept, time, etc
                 state of queue after request
+
+
+
+    define period length in config
+    then try taking out period redowood
+
+    vmodel not working to export data
         
 {% endcomment %}
 
