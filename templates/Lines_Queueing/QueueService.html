@@ -306,9 +306,7 @@
 
     </script>
 
-    <!--Import the redwood-decision and redwood-period webcomponents.-->
-    <link rel="import"
-        href="/static/otree-redwood/webcomponents/redwood-decision/redwood-decision.html">
+    <!--Import the redwood-period webcomponent.-->
     <link rel="import"
         href="/static/otree-redwood/webcomponents/redwood-period/redwood-period.html">
 
@@ -401,10 +399,6 @@
     <!-- django form inputs -->
     <input type="hidden" name="time_Queue" id="arrive_time" />
     <input type="hidden" name="time_Service" id="sr_time" />
-    <input type="hidden" name="service_time" v-model="service_time" />
-    <input type="hidden" name="pay_rate" v-model="pay_rate" />
-    <input type="hidden" name="accumulated" v-model="accumulated" />
-
 
     <redwood-period></redwood-period>
     <redwood-channel
@@ -413,6 +407,9 @@
     </redwood-channel>
 
     <div id="app">
+        <input type="hidden" name="service_time" v-model="service_time" />
+        <input type="hidden" name="pay_rate" v-model="pay_rate" />
+        <input type="hidden" name="accumulated" v-model="accumulated.toFixed(2)" />
         <div class="row" v-bind:style="{ height: .775 * h + 'px;' }">
             <div class="col-12">
                 <div class="row infobar">
@@ -615,10 +612,6 @@
 
 {% comment %}
 
-    - starting pos randomization
-    
-    -   multiple rounds
-
     -   test html rendering in leeps lab
     -   metadata
             returned form fields
@@ -631,12 +624,7 @@
                 accept, time, etc
                 state of queue after request
 
-
-
     define period length in config
-    then try taking out period redowood
-
-    vmodel not working to export data
         
 {% endcomment %}
 
