@@ -54,27 +54,29 @@ class Player(BasePlayer):
     time_BP = models.LongStringField()
     time_Results = models.LongStringField()
 
+    start_pos = models.IntegerField()
     service_time = models.FloatField() # this is the time it takes them to go thru door once first in line
     pay_rate = models.FloatField()
     accumulated = models.FloatField()
+    metadata = models.LongStringField()
 
     # bid_price = models.FloatField()
-    # trades = models.LongStringField()
 
 class Group(RedwoodGroup):
 
-    group_trades = models.LongStringField()
-
     def period_length(self):
-        return Constants.period_lengths[self.round_number]
+        return Constants.period_lengths[self.round_number - 1]
+
+    def queue_state(self, data):
+        queue = {}
+        for p in self.get_players():
+            pp = data[str(p.id_in_group)]
+            queue[pp['pos']] = pp['id']
+        return [queue.get(k) for k in sorted(queue)]
 
     def _on_swap_event(self, event=None, **kwargs):
 
-        for p in self.get_players():
-
-            # relies on only one thing being changed every click, we'll see what happens when two people click at nearly the same time
-            # might have to add a timestamp to metadata
-            
+        for p in self.get_players():    
             # fields 'requesting' and  'accepted' of the person who clicked the button will be updated client-side;
             # all other fields are updated here based on the other fields' states
             # case 1: person is not in_trade and requesting someone who is not in_trade
@@ -85,18 +87,34 @@ class Group(RedwoodGroup):
             # Note that the JS will prevent anyone in trade from requesting another trade
             
             p1 = event.value[str(p.id_in_group)]
+            g_index = p.participant.vars[self.round_number]['group']
+
+            # someone has gone into the service room, and everyone in the queue advances one position
             if p1['next'] == True:
                 if p1['pos'] == 0:
                     p1['alert'] = Constants.alert_messages['next_self']
                     if p1['in_trade']: # requested != None
+
                         p2_id = str(p1['requested'])
                         p2 = event.value[p2_id]
+                        metadata = {}
+
                         p1['in_trade'] = False
                         p2['in_trade'] = False
                         p1['requested'] = None
                         p2['requesting'] = None
-                        p1['accepted'] = 2
+                        p1['accepted'] = 2 # this should be unnecessary
+
+                        metadata['status'] = 'cancelled'
+                        metadata['requester'] = p2['id']
+                        metadata['requestee'] = p1['id']
+                        timestamp = p2['last_trade_request']
+                        p2['last_trade_request'] = None
                         event.value[p2_id] = p2
+                        event.value[str(p.id_in_group)] = p1
+                        metadata['queue'] = self.queue_state(event.value)
+                        event.value['metadata'][timestamp] = metadata
+
                 elif p1['pos'] > 0:
                     if p1['alert'] == Constants.alert_messages['next_queue']:
                         p1['alert'] = Constants.alert_messages['next_queue2']
@@ -108,6 +126,8 @@ class Group(RedwoodGroup):
                 else:
                     p1['alert'] = Constants.alert_messages['none']
                 p1['next'] = False
+
+            # someone has requested a trade
             elif not p1['in_trade'] and p1['requesting'] != None:
                 p2 = event.value[str(p1['requesting'])]
                 if not p2['in_trade']:
@@ -118,36 +138,57 @@ class Group(RedwoodGroup):
                     p2['alert'] = Constants.alert_messages['requested']
                     event.value[str(p1['requesting'])] = p2
                 else:
+                    # unless the JS button disabling fails, this will never get executed
                     p1['requesting'] = None
                     p1['alert'] = Constants.alert_messages['unv_other']
+
+            # someone has responded to a trade request
             elif p1['in_trade'] and p1['requested'] != None:
-                p2_id = str(p1['requested'])
-                p2 = event.value[p2_id]
-                if p1['accepted'] == 0:
-                    p1['in_trade'] = False
-                    p2['in_trade'] = False
-                    p1['requested'] = None
-                    p2['requesting'] = None
-                    p1['accepted'] = 2
-                    p1['alert'] = Constants.alert_messages['declining']
-                    p2['alert'] = Constants.alert_messages['declined']
-                elif p1['accepted'] == 1:
-                    p1['in_trade'] = False
-                    p2['in_trade'] = False
-                    p1['requested'] = None
-                    p2['requesting'] = None
-                    p1['accepted'] = 2
-                    temp = p1['pos']
-                    p1['pos'] = p2['pos']
-                    p2['pos'] = temp
-                    p1['alert'] = Constants.alert_messages['accepting']
-                    p2['alert'] = Constants.alert_messages['accepted']
-                event.value[p2_id] = p2
-            event.value[str(p.id_in_group)] = p1
+                if p1['accepted'] != 2:
+                    
+                    p2_id = str(p1['requested'])
+                    p2 = event.value[p2_id]
+                    metadata = {}
+                    
+                    if p1['accepted'] == 0:
+                        p1['in_trade'] = False
+                        p2['in_trade'] = False
+                        p1['requested'] = None
+                        p2['requesting'] = None
+                        p1['accepted'] = 2
+                        p1['alert'] = Constants.alert_messages['declining']
+                        p2['alert'] = Constants.alert_messages['declined']
+
+                        metadata['status'] = 'declined'
+                        
+                    elif p1['accepted'] == 1:
+
+                        p1['in_trade'] = False
+                        p2['in_trade'] = False
+                        p1['requested'] = None
+                        p2['requesting'] = None
+                        p1['accepted'] = 2
+                        temp = p1['pos']
+                        p1['pos'] = p2['pos']
+                        p2['pos'] = temp
+                        p1['alert'] = Constants.alert_messages['accepting']
+                        p2['alert'] = Constants.alert_messages['accepted']
+
+                        metadata['status'] = 'accepted'
+                        
+                    metadata['requester'] = p2['id']
+                    metadata['requestee'] = p1['id']
+                    timestamp = p2['last_trade_request']    
+                    p2['last_trade_request'] = None
+                    event.value[p2_id] = p2
+                    event.value[str(p.id_in_group)] = p1
+                    metadata['queue'] = self.queue_state(event.value)
+                    event.value['metadata'][timestamp] = metadata
+
+            event.value[str(p.id_in_group)] = p1 # partially redundant
 
         # broadcast the updated data out to all subjects
         self.send("swap", event.value)
-    
 
 class Subsession(BaseSubsession):
     
@@ -169,6 +210,7 @@ class Subsession(BaseSubsession):
                     'id': p.id_in_group,
                     'pos': p.participant.vars[self.round_number]['start_pos'],
                     'in_trade': False,
+                    'last_trade_request': None,
                     'requested': None,
                     'requesting': None, # clicking a trade button changes this value
                     'accepted': 2, # 2 is None, 1 is True, 0 is False; clicking a yes/no button changes this value
@@ -176,15 +218,14 @@ class Subsession(BaseSubsession):
                     'num_players_queue': Constants.num_players,
                     'num_players_service': 0,
                     'next': False,
-                    'metadata': None # might move this to be for the whole group, not for every player
                 }
-                self.session.vars[self.round_number][g_index - 1][p.id_in_group] = p_data
-
+                self.session.vars[self.round_number][g_index][p.id_in_group] = p_data
+                self.session.vars[self.round_number][g_index]['metadata'] = {}
 
 
 '''
 metadata structure:
-
+    { 'timestamp': {'status': 'accepted/declined/cancelled', 'requester': #, 'requestee': #, 'queue': [#,#,#...]}, ... }
 '''
 
 

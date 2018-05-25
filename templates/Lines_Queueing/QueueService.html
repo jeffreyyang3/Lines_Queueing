@@ -62,6 +62,7 @@
                 return {
 
                     // player data
+                    start_pos: {{ start_pos_ | json }},
                     pay_rate: {{ pay_rate_ | json }},
                     service_time: {{ service_time_ | json }},
                     time_spent_in_front: 0,
@@ -101,6 +102,7 @@
                         9: true,
                         10: true,
                     },
+                    metadata: null,
                     channel : document.getElementById('channel')
                 }
             },
@@ -126,7 +128,7 @@
             watch: {
                 current_alert: function() {
                     clearInterval(this.alert_interval)
-                    console.log(this.current_alert)
+                    //console.log(this.current_alert)
                     this.display_alert = this.current_alert
                     this.dur = 0
                     this.alert_opacity = 1
@@ -166,7 +168,8 @@
                 // used to determine whether buttons are clickable
                 last_event: function() {
                     for(var p in g_data) {
-                        if (!this.in_trade && g_data.hasOwnProperty(p) && !g_data[p]['in_trade']) {
+                        if (!this.in_trade && g_data.hasOwnProperty(p) && p != 'metadata' 
+                                && !g_data[p]['in_trade']) {
                             this.trade_allowed[g_data[p]['pos']] = true
                         }
                         else {
@@ -176,13 +179,23 @@
                 },
             },
             methods: {
+                /*
+                    when we make/respond to a request, we will put in metadata
+                    - the timestamp
+                    then we will calculate requester, requestee, and decision, appending decision if
+                    necessary to an already existing request in the longstringfield
+                    the longstringfield will be in dict format for easy evaluation
+                    and the 
+                */
                 request: function(pos) {
                     for(var p in g_data) {
-                        if (g_data.hasOwnProperty(p)) {
-                            if(g_data[p]['pos'] == pos)
+                        if (g_data.hasOwnProperty(p) && p != 'metadata') {
+                            if(g_data[p]['pos'] == pos) {
                                 g_data[this.ID]['requesting'] = g_data[p]['id']
+                                g_data[this.ID]['last_trade_request'] = new Date().getTime()
+                            }
                         }
-                    }   
+                    }
                     this.update()
                 },
 
@@ -193,7 +206,7 @@
 
                 next: function() {
                     for(var p in g_data) {
-                        if (g_data.hasOwnProperty(p)) {
+                        if (g_data.hasOwnProperty(p) && p != 'metadata') {
                             g_data[p]['pos']--
                             g_data[p]['num_players_queue']--
                             g_data[p]['num_players_service']++
@@ -282,10 +295,11 @@
         vm.channel.addEventListener('event', function(event) {
             
             // for debugging
-            console.log(event.detail.channel) // "swap"
+            //console.log(event.detail.channel) // "swap"
             //console.log(new Date().getTime())
             //console.log(event.detail.timestamp)
             console.log(event.detail.payload) // test_order
+            //console.log(event.detail.payload['metadata'])
 
             g_data = event.detail.payload
 
@@ -299,6 +313,7 @@
             vm.num_players_queue = p.num_players_queue
             vm.num_players_service = p.num_players_service
             vm.last_event = parseInt(new Date().getTime() / 1000)
+            vm.metadata = g_data['metadata']
             //now, with reactivity, all of these fields should update in the html
             //need to do some logic that updates the actual html from here
         })
@@ -407,9 +422,11 @@
     </redwood-channel>
 
     <div id="app">
-        <input type="hidden" name="service_time" v-model="service_time" />
-        <input type="hidden" name="pay_rate" v-model="pay_rate" />
-        <input type="hidden" name="accumulated" v-model="accumulated.toFixed(2)" />
+        <input type="hidden" name="service_time" v-model="service_time"/>
+        <input type="hidden" name="pay_rate" v-model="pay_rate"/>
+        <input type="hidden" name="accumulated" v-model="accumulated.toFixed(2)"/>
+        <input type="hidden" name="start_pos" v-model="start_pos"/>
+        <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
         <div class="row" v-bind:style="{ height: .775 * h + 'px;' }">
             <div class="col-12">
                 <div class="row infobar">
@@ -612,10 +629,7 @@
 
 {% comment %}
 
-    -   install redwood on server then test html rendering in leeps lab
     -   metadata
-            player
-                original pos
             group
                 every request
                 accept, time, etc
