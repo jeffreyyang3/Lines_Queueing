@@ -4,8 +4,6 @@ from .models import Constants
 Eli Pandolfo <epandolf@ucsc.edu>
 '''
 
-# initial instructions for the experiment
-# has 1 form field, the time the page loads
 class Instructions(Page):
 
     form_model = 'player'
@@ -23,7 +21,6 @@ class QueueServiceWaitPage(WaitPage):
 # the rooms is with one page, and using JS to show both rooms.
 class QueueService(Page):
 
-    # does this need to be group?
     form_model = 'player'
     form_fields = ['time_Queue', 'time_Service', 'start_pos', 'service_time', 'pay_rate', 'accumulated', 'metadata']
     

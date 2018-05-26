@@ -7,7 +7,11 @@ from . import config as config_py
 
 '''
 Eli Pandolfo <epandolf@ucsc.edu>
-otree-redwood>=0.7.0
+
+Notes to ask Kristian:
+    state of queue
+    num players
+    different num players in a group
 '''
 
 class Constants(BaseConstants):
@@ -23,7 +27,8 @@ class Constants(BaseConstants):
     num_players = sum([len(group[0]) for group in config])
     players_per_group = len(config[0][0])
 
-
+    # these will be displayed to players in the UI. Defined here for consistency and
+    # a central location
     alert_messages = {
         'requested': 'You have been requested to swap',
         'requesting': 'You have requested to swap',
@@ -38,16 +43,17 @@ class Constants(BaseConstants):
         'none': '',
     }
 
-# player attributes:
-    # - time for all pages
-    # - pay rate
-    # - position in queue
-    # - id in group (what determines a player's starting position in the queue?)
-    # - list of transactions that that player has sent/received (this could be 2 lists)
-
-    # time remaining in line and potential payoff should be done all in js
 class Player(BasePlayer):
 
+    # player attributes:
+    #   - time for all pages
+    #   - starting position in queue
+    #   - service time: time it takes to go through door once first in line
+    #   - pay rate
+    #   - total money accumulated at the end of the round
+    #   - list of transactions that the entire group has undergone
+    #     This is necessary because a page can return group forms or player forms but not both
+    #   - bid price? Later version
     time_Instructions = models.LongStringField()
     time_Queue = models.LongStringField()
     time_Service = models.LongStringField()
@@ -55,7 +61,7 @@ class Player(BasePlayer):
     time_Results = models.LongStringField()
 
     start_pos = models.IntegerField()
-    service_time = models.FloatField() # this is the time it takes them to go thru door once first in line
+    service_time = models.FloatField()
     pay_rate = models.FloatField()
     accumulated = models.FloatField()
     metadata = models.LongStringField()
@@ -64,9 +70,18 @@ class Player(BasePlayer):
 
 class Group(RedwoodGroup):
 
+    # needed for otree redwood; this should replace the need for the get_timeout_seconds method
+    # in pages.QueueService, but for some reason does has no effect. This is essentially a wrapper
+    # for the timeout_seconds variable anyway.
     def period_length(self):
         return Constants.period_lengths[self.round_number - 1]
 
+    # takes in the data transferred back and forth by channels,
+    # and generates a list representing the queue, where each element in the list
+    # IMPORTANT: this list represents the the entire queue, including players in the service room,
+    # organized by when they arrived. This means that the 0th element in the returned list is the
+    # first person to have entered the service room, and the last element in the list is the person
+    # in the back of the queue.
     def queue_state(self, data):
         queue = {}
         for p in self.get_players():
@@ -74,11 +89,63 @@ class Group(RedwoodGroup):
             queue[pp['pos']] = pp['id']
         return [queue.get(k) for k in sorted(queue)]
 
+
+    '''
+        On a swap event: this is a method defined by redwood. It is called when channel.send() is
+        called in the javascript. That happens when
+            1) someone starts a trade request by pressing the trade button,
+            2) someone responds to a trade request by pressing the yes or no button,
+            3) someone enters the service room and the entire queue moves forward.
+        
+        This method essentially defines a state machine. Each player has a state, represented by
+        a dictionary with keys:
+            id; id in group; a number from 1 to Constants.players_per_group,
+            
+            pos; position in queue at time of input; a number from -Constants.players_per_group to
+                Constants.players_per_group,
+            
+            in_trade; boolean - true if this player has 
+                1) requested a trade and awaits a response;
+                2) has been requested and has not yet responded,
+            
+            last_trade_request; timestamp of the last time this player clicked the trade button,
+            
+            requested; if this player has been requested to swap, the id of the player who made
+                the request; None, or a number from 1 to Constants.players_per_group,
+            
+            requesting; if this player has made a request to swap, the id of the player who the
+                request was made to; None, or a number from 1 to Constants.players_per_group,
+            
+            accepted; status of trade acceptance; 2 if requesting/no response/not in trade,
+                1 if accepted, 0 if declined,
+            
+            alert; the current alert displayed to a player; a value in Constants.alert_messages,
+            
+            num_players_queue; the number of players who have not entered the service room at
+                time of input; a number from 0 to Constants.players_per_group,
+            
+            num_players_service; the number of players who have entered the service room at
+                time of input; a number from 0 to Constants.players_per_group,
+            
+            next; boolean; true if someone's service time has just run out, false otherwise.
+
+        The state machine takes in the state of each player, and alters the states of that
+        player and other players accordingly.
+
+        Note that only one player's state can be different upon this method being called than it was 
+        directly before the method was called; because each time an event occurs,
+        (request, response, or next) this method gets called.
+
+        After updating all player's states, sends the data back to the client.
+
+        - Need to ensure that this is true; otherwise, we might need a queue of pending events
+    '''
     def _on_swap_event(self, event=None, **kwargs):
 
         for p in self.get_players():    
-            # fields 'requesting' and  'accepted' of the person who clicked the button will be updated client-side;
-            # all other fields are updated here based on the other fields' states
+            # fields 'requesting' and 'accepted' of the person who clicked the button
+            # will be updated client-side;
+            # all other fields (player states) are updated here
             # case 1: person is not in_trade and requesting someone who is not in_trade
             # case 2: person is not in_trade and requesting someone who is in_trade
             # case 3: person is in_trade and accepting

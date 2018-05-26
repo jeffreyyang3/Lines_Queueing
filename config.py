@@ -5,7 +5,6 @@ import random
     - Each inner inner list represents a period. 
     - Period lists can have no more dictionaries than there are participants.
     - Each dict represents a player.
-    - The data can be shuffled with the optoinal shuffle argument. It defaults to true.
 
     - for now, all groups must be the same size
 
@@ -13,9 +12,13 @@ import random
     - otherwise the behavior is undefined
 
     - Defining the starting position does not affect which player (in the room) gets assigned to
-    - each dictionary here. Rather, it keeps a person's starting position in the line consistant
+    - each dictionary here. Rather, it keeps a person's starting position in the line consistent
     - with their pay rate and their service time
 
+    - periods lengths is a list containing the total time for each period
+    - need to incorporate K into this!!
+
+    - might make period a dict with players, a list of dicts, and period data, a dict of data for the entire period
 '''
 period_lengths = [35]
 data =  [
@@ -67,7 +70,7 @@ data =  [
 
 # shuffles order of groups, the order of periods within the group, and the order of players
 # within the period.
-# also fills default start_pos's
+# also fills default start_pos's with random positions
 def shuffle(data):
     for i,group in enumerate(data):
         for j,period in enumerate(group):
@@ -77,7 +80,6 @@ def shuffle(data):
                 for k,player in enumerate(period):
                     data[i][j][k]['start_pos'] = positions[k]
             random.shuffle(data[i][j]) # shuffle order of players within periods
-           #print(data[i][j])
         random.shuffle(data[i]) # shuffle order of periods withing groups
     random.shuffle(data) # shuffle order of groups
 
