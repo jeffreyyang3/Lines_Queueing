@@ -20,6 +20,11 @@ import random
 
     - might make period a dict with players, a list of dicts, and period data, a dict of data for the entire period
 '''
+
+''' TODO
+    
+    combine period lengths and other period data with data
+'''
 period_lengths = [35]
 data =  [
             [ # Group 1

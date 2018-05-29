@@ -54,3 +54,12 @@ treatment: everyone sees everyone elses transfers
 once you are in the room can you still see trading taking place? I assume yes, so the queue and service rooms are all one screen
 
 have the group store a dictionary, mapping each player's ID to their participant.vars
+
+TODO overall 5-29-18
+    config, see todo
+    update UI with scrambled ID identifiers that stay attached to their bubbles
+    add pure cutting functionality - how? ask kristian
+    add bidding feature for trade incentives
+    add payoffs and results data
+    add round debreif data
+    add instructions

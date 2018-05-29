@@ -40,6 +40,7 @@ class QueueService(Page):
             'id': self.player.id_in_group
         }
 
+# round debrief, displayed after queue service page. Has no specific data yet
 class BetweenPages(Page):
     form_model = 'player'
     form_fields = ['time_BP']
@@ -47,6 +48,7 @@ class BetweenPages(Page):
     def vars_for_template(self):
         return {'round': self.round_number}
 
+# displays experiment results. Has no specific data set yet.
 class Results(Page):
     form_model = 'player'
     form_fields = ['time_Results']

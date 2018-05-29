@@ -5,13 +5,13 @@
     
     Eli Pandolfo <epandolf@ucsc.edu>
 
-    otree redwood:
+    <!-- otree redwood:
         if you call any function that calls 'channel.send()' in the plain javascript or within
         the Vue machine, you will get an error saying channel does not have a method called
         send.
 
         However, if you call the function from the HTML or from a function that runs automatically
-        such as window.onload, it works fine.
+        such as window.onload, it works fine. -->
     
 {% endcomment %}
 
@@ -20,7 +20,7 @@
     <script src="{% static "js/vue.js" %}"></script>
     <script type='text/javascript'>
         // time when user enters the queue room
-        // might want to change this to when all players arrive
+        // because there is a wait page, this is when all players simultaneously arrive
         window.onload = function () {
             document.getElementById('arrive_time').value = new Date().toISOString()
         }
@@ -55,6 +55,16 @@
             console.log('period ended');
         });
 
+        /* 
+            Vue machine
+            Holds all data for a single player.
+            Because of a property (design flaw) of Vue that objects stored in vm.data are promises,
+            to my knowledge you cannot modify objects stored in data (this does not apply
+            to primitives). For this reason, g_data, which is the object representing the event that
+            gets transmitted over websockets to the server, is stored outside Vue.
+
+            https://vuejs.org/v2/guide/
+        */
         var vm = new Vue({
             delimiters: ['{', '}'],
             el: '#app',
@@ -106,6 +116,7 @@
                     channel : document.getElementById('channel')
                 }
             },
+            // Vue lifecycle hook: this function gets called when the Vue instance is created
             created: function() {
                 this.start_time = parseInt(new Date().getTime() / 1000)
 
@@ -126,6 +137,7 @@
             // watch functions are called every time the property associated with the function name
             // changes
             watch: {
+                // updates the alert that the player sees
                 current_alert: function() {
                     clearInterval(this.alert_interval)
                     //console.log(this.current_alert)
@@ -146,8 +158,8 @@
                         }
                     }.bind(this), 10)
                 },
-
                 // gets called every time this.now is updated, every second
+                // updates player's service time served, and accumulated money
                 now: function() {
                     if(this.served == true) {
                         this.accumulated += this.pay_rate
@@ -178,15 +190,11 @@
                     }
                 },
             },
+            // user defined methods, that can be called within Vue, the js, or the HTML
             methods: {
-                /*
-                    when we make/respond to a request, we will put in metadata
-                    - the timestamp
-                    then we will calculate requester, requestee, and decision, appending decision if
-                    necessary to an already existing request in the longstringfield
-                    the longstringfield will be in dict format for easy evaluation
-                    and the 
-                */
+                // emits a request. Called by a player clicking a request button
+                // single argument is the position of the requestee
+                // the position of the requester is stored in data and is already known
                 request: function(pos) {
                     for(var p in g_data) {
                         if (g_data.hasOwnProperty(p) && p != 'metadata') {
@@ -198,12 +206,13 @@
                     }
                     this.update()
                 },
-
+                // respond to a request: called when a player clicks a yes/no button
                 respond: function(yesno) {
                     g_data[this.ID]['accepted'] = yesno
                     this.update()
                 },
-
+                // called when someone's service time has run out; someone is about to enter the
+                // service room
                 next: function() {
                     for(var p in g_data) {
                         if (g_data.hasOwnProperty(p) && p != 'metadata') {
@@ -225,7 +234,17 @@
             }
         })
 
-        // component for queue player representation
+        /*  Component for queue player representation
+            vm means Vue machine or the vue instance defined above
+            Because the component needs to know whether the player it represents is in trade or not,
+            it needs to access the vm. So, it cannot be defined above the vm. Since the vm
+            automatically becomes the parent of components defined above it, but does not recognize
+            components defined below it. The components cannot be defined inside it because for some
+            reason doing that causes a stack overflow.
+
+            The point is that you will see warnings related to the component declaration in the
+            console, but they can be ignored and have no effect on the program running.
+        */
         Vue.component( 'q-bubble', {
             delimiters: ['{', '}'],
             props: ['num_players', 'comp_pos', 'self_pos', 'requested'],
@@ -274,6 +293,7 @@
         })
 
         // component for service player representation
+        // same issues as q-bubble
         Vue.component( 's-bubble', {
             delimiters: ['{', '}'],
             props: ['num_players', 'comp_pos', 'self_pos'],
@@ -288,21 +308,21 @@
             `
         })
 
-        // all group data pertinent to swaps
+        // all group data pertinent to swaps and player states
         var g_data = {{ data | json }}
 
-        // adds event listener to check for events sent by server over channel
+        // event listener to check for events sent by server over channel
         vm.channel.addEventListener('event', function(event) {
             
             // for debugging
             //console.log(event.detail.channel) // "swap"
-            //console.log(new Date().getTime())
-            //console.log(event.detail.timestamp)
-            console.log(event.detail.payload) // test_order
-            //console.log(event.detail.payload['metadata'])
+            //console.log(new Date().getTime()) // timestamp
+            //console.log(event.detail.payload) // test_order
+            //console.log(event.detail.payload['metadata']) // previous trade records
 
             g_data = event.detail.payload
 
+            // updates this player's vue data
             var p = g_data[vm.ID]
             vm.position = p.pos
             vm.in_trade = p.in_trade
@@ -422,6 +442,7 @@
     </redwood-channel>
 
     <div id="app">
+        <!-- hidden inputs that submit all required data to server at end of round -->
         <input type="hidden" name="service_time" v-model="service_time"/>
         <input type="hidden" name="pay_rate" v-model="pay_rate"/>
         <input type="hidden" name="accumulated" v-model="accumulated.toFixed(2)"/>
@@ -628,12 +649,6 @@
 {% endblock %}
 
 {% comment %}
-
-    -   metadata
-            group
-                every request
-                accept, time, etc
-                state of queue after request
         
 {% endcomment %}
 
