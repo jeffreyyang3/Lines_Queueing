@@ -59,7 +59,18 @@ TODO overall 5-29-18
     config, see todo
     update UI with scrambled ID identifiers that stay attached to their bubbles
     add pure cutting functionality - how? ask kristian
+        entirely different mode where you just cut and dont trade spots
     add bidding feature for trade incentives
+        you have a field where you type a number and the requestee sees how much was offered
+        offerer loses that amount and the requestee gains it
+        people start with endowment
+        waiting time = all time not being served
+        once you are first in line:
+            
+        2 ways
+            1. endowment subtracts whatever you offer someone, and you subtract from your endowment a multiplier * your waiting time
     add payoffs and results data
-    add round debreif data
+    add round debrief data
     add instructions
+
+

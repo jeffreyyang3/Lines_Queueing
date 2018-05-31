@@ -19,13 +19,11 @@ class Constants(BaseConstants):
     name_in_url = 'Lines_Queueing'
     participation_fee = c(5)
 
-    config, period_lengths = config_py.export_data()
-    # period lengths: combined length in seconds players are in the 
-    # queue room and the payoff room per period.
+    config = config_py.export_data()
     
     num_rounds = len(config[0])
-    num_players = sum([len(group[0]) for group in config])
-    players_per_group = len(config[0][0])
+    num_players = sum([len(group[0]['players']) for group in config])
+    players_per_group = len(config[0][0]['players'])
 
     # these will be displayed to players in the UI. Defined here for consistency and
     # a central location
@@ -74,7 +72,8 @@ class Group(RedwoodGroup):
     # in pages.QueueService, but for some reason does has no effect. This is essentially a wrapper
     # for the timeout_seconds variable anyway.
     def period_length(self):
-        return Constants.period_lengths[self.round_number - 1]
+        g_index = self.get_player_by_id(1).participant.vars[self.round_number]['group']
+        return Constants.config[g_index][self.round_number - 1]['settings']['duration']
 
     # takes in the data transferred back and forth by channels,
     # and generates a list representing the queue, where each element in the list
@@ -288,7 +287,7 @@ class Subsession(BaseSubsession):
             self.session.vars[self.round_number] = []
             for i in range(Constants.num_rounds):
                 self.session.vars[self.round_number].append({})
-            g_data = Constants.config[g_index][self.round_number - 1]
+            g_data = Constants.config[g_index][self.round_number - 1]['players']
 
             # sets up each player's starting values
             for p in g.get_players():

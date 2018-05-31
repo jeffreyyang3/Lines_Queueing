@@ -22,15 +22,17 @@ class QueueServiceWaitPage(WaitPage):
 class QueueService(Page):
 
     form_model = 'player'
-    form_fields = ['time_Queue', 'time_Service', 'start_pos', 'service_time', 'pay_rate', 'accumulated', 'metadata']
+    form_fields = ['time_Queue', 'time_Service', 'start_pos', 'service_time',
+        'pay_rate', 'accumulated', 'metadata']
     
     def get_timeout_seconds(self):
-        return Constants.period_lengths[self.round_number - 1]
+        g_index = self.participant.vars[self.round_number]['group']
+        return Constants.config[g_index][self.round_number - 1]['settings']['duration']
 
     def vars_for_template(self):
         g_index = self.participant.vars[self.round_number]['group']
         return {
-            'round_time_': Constants.period_lengths[self.round_number - 1],
+            'round_time_': Constants.config[g_index][self.round_number - 1]['settings']['duration'],
             'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
             'service_time_': self.participant.vars[self.round_number]['service_time'],
             'start_pos_': self.participant.vars[self.round_number]['start_pos'],
