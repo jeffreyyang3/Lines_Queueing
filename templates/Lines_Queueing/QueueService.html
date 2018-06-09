@@ -215,12 +215,15 @@
                 // emits a request. Called by a player clicking a request button
                 // single argument is the position of the requestee
                 // the position of the requester is stored in data and is already known
-                request: function(pos) {
+                request: function(obj) {
+                    pos = obj['pos']
+                    bid = obj['bid']
                     for(var p in g_data) {
                         if (g_data.hasOwnProperty(p) && p != 'metadata') {
                             if(g_data[p]['pos'] == pos) {
                                 g_data[this.ID]['requesting'] = g_data[p]['id']
                                 g_data[this.ID]['last_trade_request'] = new Date().getTime()
+                                g_data[this.ID]['bid'] = bid
                             }
                         }
                     }
@@ -268,9 +271,27 @@
         Vue.component( 'q-bubble', {
             delimiters: ['{', '}'],
             props: ['num_players', 'comp_pos', 'self_pos', 'requested', 'swap_method'],
+            data: function() {
+                return {
+                    bid: null,
+                    bid_clicked: false,
+                }
+            },
             computed: {
                 trade_allowed: function() {
                     return vm.trade_allowed[this.comp_pos]
+                }
+            },
+            methods: {
+                bid_click: function() {
+                    this.bid_clicked = true
+                },
+                send_click: function(bid) {
+                    // need to check that the shit is right (min, max), and issue alert if not
+                    // then deal with shit in models, also add alerts
+                    this.bid_clicked = false
+                    this.bid = document.getElementById('bid').value
+                    vm.request({pos: this.comp_pos, bid: this.bid})
                 }
             },
             template: `
@@ -288,24 +309,70 @@
                             </text>
                         </svg>
                     </div>
-                    <div class="row btn-row">
+
+                    <div class="row btn-row" v-if="swap_method == 'swap'">
+                        
                         <button type="button" class="btn btn-large"
                             style="margin-left: 20px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="$emit('request', comp_pos)">{ swap_method }</button>
+                            v-on:click="$emit('request', {pos: comp_pos, bid: null})">Swap</button>
+                        
                         <button type="button" class="btn btn-large"
                             style="margin-left: 20px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
-                            disabled>{ swap_method }</button>
+                            disabled>Swap</button>
+                        
                         <div class="col-6">
                             <button type="button" class="btn btn-large btn-yes"
                                 v-if="comp_pos == self_pos + 1 && requested != null"
                                 onclick="vm.respond(1)">Yes</button>
-                        </div>
+                        </div> 
                         <div class="col-6">
                             <button type="button" class="btn btn-large btn-no"
                                 v-if="comp_pos == self_pos + 1 && requested != null"
                                 onclick="vm.respond(0)">No</button>
                         </div>
                     </div>
+
+                    <div class="row btn-row" v-if="swap_method == 'cut'">
+                        
+                        <button type="button" class="btn btn-large"
+                            style="margin-left: 20px;" v-if="comp_pos < self_pos && trade_allowed"
+                            v-on:click="$emit('request', {pos: comp_pos, bid: null})">Cut</button>
+                        
+                        <button type="button" class="btn btn-large"
+                            style="margin-left: 20px;" v-if="comp_pos < self_pos && !trade_allowed"
+                            disabled>Cut</button>
+                        
+                    </div>
+
+                    <div class="row btn-row" v-if="swap_method == 'bid'">
+                        
+                        <button type="button" class="btn btn-large"
+                            style="margin-left: 20px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+                            v-on:click="bid_click">Bid</button>
+                        
+                        <button type="button" class="btn btn-large"
+                            style="margin-left: 20px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
+                            disabled>Bid</button>
+
+                        <input v-if="bid_clicked" type="number" id="bid" max="vm.payoff" min="0"
+                            style="width: 100%" onKeyPress="if (event.keyCode == 13) return false"/>
+
+                         <button type="button" class="btn btn-large"
+                            style="margin-left: 20px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+                            v-on:click="send_click">Send</button>
+                        
+                        <div class="col-6">
+                            <button type="button" class="btn btn-large btn-yes"
+                                v-if="comp_pos == self_pos + 1 && requested != null"
+                                onclick="vm.respond(1)">Yes</button>
+                        </div> 
+                        <div class="col-6">
+                            <button type="button" class="btn btn-large btn-no"
+                                v-if="comp_pos == self_pos + 1 && requested != null"
+                                onclick="vm.respond(0)">No</button>
+                        </div>
+                    </div>
+
                 </div>
             `
         })
@@ -335,7 +402,7 @@
             // for debugging
             //console.log(event.detail.channel) // "swap"
             //console.log(new Date().getTime()) // timestamp
-            //console.log(event.detail.payload) // test_order
+            console.log(event.detail.payload) // test_order
             //console.log(event.detail.payload['metadata']) // previous trade records
 
             g_data = event.detail.payload

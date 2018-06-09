@@ -57,7 +57,7 @@ data =  [
                 { # Period 1
                     'settings': {
                         'duration': 10000,
-                        'swap_method': 'swap',
+                        'swap_method': 'bid',
                         'pay_method': 'lose',
                         'k': .5,
                         'service_distribution': 1,

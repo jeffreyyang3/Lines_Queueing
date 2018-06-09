@@ -28,6 +28,8 @@ class Constants(BaseConstants):
     # these will be displayed to players in the UI. Defined here for consistency and
     # a central location
     alert_messages = {
+        'cutting': 'You have cut the line',
+        'cutted': 'Someone has cut in front of you',
         'requested': 'You have been requested to swap',
         'requesting': 'You have requested to swap',
         'accepted': 'Your swap request has been accepted',
@@ -182,6 +184,9 @@ class Group(RedwoodGroup):
             
             # gets this player's dict from the transmitted event
             p1 = event.value[str(p.id_in_group)]
+            g_index = p.participant.vars[self.round_number]['group']
+            swap_method = (Constants.config[g_index][self.round_number - 1]
+                ['settings']['swap_method'])
 
             # someone has entered the service room
             if p1['next'] == True:
@@ -225,19 +230,44 @@ class Group(RedwoodGroup):
 
             # someone has initiated a trade request
             elif not p1['in_trade'] and p1['requesting'] != None:
-                p2 = event.value[str(p1['requesting'])]
-                # requesting_clean
-                if not p2['in_trade']:
-                    p1['in_trade'] = True
-                    p2['in_trade'] = True
-                    p2['requested'] = p1['id']
-                    p1['alert'] = Constants.alert_messages['requesting']
-                    p2['alert'] = Constants.alert_messages['requested']
-                    event.value[str(p1['requesting'])] = p2
-                # requesting_dirty; the js should prevent the logic from ever reaching this
-                else:
+
+                if swap_method == 'cut':
+                    p2 = event.value[str(p1['requesting'])]
+                    temp = p2['pos']
+                    for i in event.value:
+                        if i != 'metadata' and i != str(p.id_in_group):
+                            if (event.value[i]['pos'] < p1['pos']
+                                    and event.value[i]['pos'] >= p2['pos']):
+                                event.value[i]['alert'] = Constants.alert_messages['cutted']
+                                event.value[i]['pos'] += 1
+
+                    p1['pos'] = temp
+                    p1['alert'] = Constants.alert_messages['cutting']
+                    metadata = {}
+                    metadata['status'] = 'cut'
+                    metadata['requester'] = p1['id']
                     p1['requesting'] = None
-                    p1['alert'] = Constants.alert_messages['unv_other']
+                    metadata['requestee'] = p2['id']
+                    timestamp = p1['last_trade_request']
+                    p1['last_trade_request'] = None
+                    event.value[str(p.id_in_group)] = p1
+                    metadata['queue'] = self.queue_state(event.value)
+                    event.value['metadata'][timestamp] = metadata
+
+                else:
+                    p2 = event.value[str(p1['requesting'])]
+                    # requesting_clean
+                    if not p2['in_trade']:
+                        p1['in_trade'] = True
+                        p2['in_trade'] = True
+                        p2['requested'] = p1['id']
+                        p1['alert'] = Constants.alert_messages['requesting']
+                        p2['alert'] = Constants.alert_messages['requested']
+                        event.value[str(p1['requesting'])] = p2
+                    # requesting_dirty; the js should prevent the logic from ever reaching this
+                    else:
+                        p1['requesting'] = None
+                        p1['alert'] = Constants.alert_messages['unv_other']
 
             # someone has responded to a trade request
             elif p1['in_trade'] and p1['requested'] != None:
@@ -329,7 +359,7 @@ class Subsession(BaseSubsession):
 
 '''
 metadata structure:
-    { 'timestamp': {'status': 'accepted/declined/cancelled', 'requester': #, 'requestee': #, 'queue': [#,#,#...]}, ... }
+    { 'timestamp': {'bid': None/$, status': 'accepted/declined/cancelled/cut', 'requester': #, 'requestee': #, 'queue': [#,#,#...]}, ... }
 '''
 
 
