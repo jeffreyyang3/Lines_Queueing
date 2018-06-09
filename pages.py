@@ -23,7 +23,8 @@ class QueueService(Page):
 
     form_model = 'player'
     form_fields = ['time_Queue', 'time_Service', 'start_pos', 'service_time',
-        'pay_rate', 'accumulated', 'metadata']
+        'pay_rate', 'payoff', 'metadata', 'endowment', 'swap_method', 'pay_method',
+        'waiting_time']
     
     def get_timeout_seconds(self):
         g_index = self.participant.vars[self.round_number]['group']
@@ -39,7 +40,12 @@ class QueueService(Page):
             'round_': self.round_number,
             'num_players_': Constants.num_players,
             'data': self.session.vars[self.round_number][g_index],
-            'id': self.player.id_in_group
+            'id': self.player.id_in_group,
+            'swap_method_': Constants.config[g_index]
+                [self.round_number - 1]['settings']['swap_method'],
+            'pay_method_': Constants.config[g_index]
+                [self.round_number - 1]['settings']['pay_method'],
+            'endowment_': self.participant.vars[self.round_number]['endowment']
         }
 
 # round debrief, displayed after queue service page. Has no specific data yet

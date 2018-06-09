@@ -20,42 +20,104 @@ import random
 
     - might make period a dict with players, a list of dicts, and period data,
     - a dict of data for the entire period
+
+    settings data:
+        'duration': 100,
+        # duration of the round in seconds
+        
+        'swap_method': 'swap',
+        # mode defining how trades occur
+            # bid: players offer a portion of their endowment in exchange for a swap
+            # swap: players ask to swap with no monetary incentive
+            # cut: players can cut to any position in line
+                # this might take some money or something
+       
+        'pay_method': 'gain',
+        # treatment for paying
+            # gain: accumulated $ increases every second in paying room by pay_rate
+            # lose: accumulated $ decreases every second in queue & service room
+                # by pay_rate
+        
+        'k': .5,
+        # portion of the total round time that makes up everyone's service times
+        
+        'service_distribution': 5,
+        # how service times are assigned
+        # if service times are explicitly defined for each player, this is ignored.
+        # if not, this must be here; throws error if not
+        # number represents the max possible factor by which one person's service time is greater
+            # than another. If 1, everyone will have the same service time.
+            # If 10, service times are assigned randomly such that no person will have a service
+            # time more than 10x longer than any other person
+        
 '''
 
 data =  [
             [ # Group 1
                 { # Period 1
                     'settings': {
-                        'duration': 35,
-                        'switch': 'swap'
+                        'duration': 10000,
+                        'swap_method': 'swap',
+                        'pay_method': 'lose',
+                        'k': .5,
+                        'service_distribution': 1,
                     },
                     'players': [
-                        {'pay_rate': 0.05, 'service_time': 10},
-                        {'pay_rate': 0.04, 'service_time': 10},
-                        {'pay_rate': 0.03, 'service_time': 10},
-                        # { 'pay_rate': 0.05, 'service_time': 30},
-                        # { 'pay_rate': 0.06, 'service_time': 30},
-                        # { 'pay_rate': 0.07, 'service_time': 30},
-                        # { 'pay_rate': 0.08, 'service_time': 13},
-                        # { 'pay_rate': 0.20, 'service_time': 10},
+                        {'pay_rate': 0.05, 'endowment': 5},
+                        {'pay_rate': 0.04, 'endowment': 6},
                     ]
                 },
-                { # Period 2
-                    'settings': {
-                        'duration': 45,
-                        'switch': 'cut'
-                    },
-                    'players': [
-                        {'pay_rate': 0.05, 'service_time': 10},
-                        {'pay_rate': 0.04, 'service_time': 10},
-                        {'pay_rate': 0.03, 'service_time': 10},
-                        # { 'pay_rate': 0.05, 'service_time': 30},
-                        # { 'pay_rate': 0.06, 'service_time': 30},
-                        # { 'pay_rate': 0.07, 'service_time': 30},
-                        # { 'pay_rate': 0.08, 'service_time': 13},
-                        # { 'pay_rate': 0.20, 'service_time': 10},
-                    ]
-                },
+                # { # Period 2
+                #     'settings': {
+                #         'duration': 100,
+                #         'swap_method': 'swap',
+                #         'pay_method': 'lose',
+                #         'k': .5,
+                #         'service_distribution': 5,
+                #     },
+                #     'players': [
+                #         {'pay_rate': 0.05, 'endowment': 5},
+                #         {'pay_rate': 0.04, 'endowment': 6},
+                #     ]
+                # },
+                # { # Period 3
+                #     'settings': {
+                #         'duration': 100,
+                #         'swap_method': 'swap',
+                #         'pay_method': 'gain',
+                #         'k': .5,
+                #         'service_distribution': 1,
+                #     },
+                #     'players': [
+                #         {'pay_rate': 0.01, 'endowment': 5, 'service_time': 10},
+                #         {'pay_rate': 0.02, 'endowment': 6, 'service_time': 20},
+                #     ]
+                # },
+                # { # Period 4
+                #     'settings': {
+                #         'duration': 100,
+                #         'swap_method': 'cut',
+                #         'pay_method': 'lose',
+                #         'k': .5,
+                #     },
+                #     'players': [
+                #         {'pay_rate': 0.05, 'endowment': 5, 'service_time': 10},
+                #         {'pay_rate': 0.04, 'endowment': 6, 'service_time': 20},
+                #     ]
+                # },
+                # { # Period 5
+                #     'settings': {
+                #         'duration': 100,
+                #         'swap_method': 'bid',
+                #         'pay_method': 'lose',
+                #         'k': .5,
+                #         'service_distribution': 10,
+                #     },
+                #     'players': [
+                #         {'pay_rate': 0.01, 'endowment': 5,},
+                #         {'pay_rate': 0.02, 'endowment': 6},
+                #     ]
+                # },
             ],
         ]
 
@@ -83,23 +145,58 @@ def export_csv(fname, data):
 # exports data to models.py
 # formats data to make it easier for models.py to parse it
 def export_data():
-    # error handling
-    for group in data:
-        for period in group:
+    # error handling & filling defaults
+    for i, group in enumerate(data):
+        for j,period in enumerate(group):
             if 'settings' not in period:
                 raise ValueError('Each period must contain settings dict')
+            
             if 'players' not in period:
                 raise ValueError('Each period must contain players dict')
-            if 'duration' not in period['settings']:
+
+            settings = period['settings']
+            players = period['players']
+            
+            if 'duration' not in settings:
                 raise ValueError('Each period settings must have a duration')
-            if 'switch' not in period['settings']:
-                raise ValueError('Each period settings must have a switch variable')
-            if period['settings']['switch'] not in ['cut', 'swap']:
-                raise ValueError('Each period settings switch variable \
-                    must be either \'swap\' or \'cut\'')
+            
+            if 'swap_method' not in settings:
+                raise ValueError('Each period settings must have a swap_method variable')
+            
+            if settings['swap_method'] not in ['cut', 'swap', 'bid']:
+                raise ValueError('Each period settings swap_method variable \
+                    must be either \'bid\', \'swap\' or \'cut\'')
+
+            if 'pay_method' not in settings:
+                raise ValueError('Each period settings must have a pay_method variable')
+            
+            if settings['pay_method'] not in ['gain', 'lose']:
+                raise ValueError('Each period settings pay_method variable \
+                    must be either \'gain\' or \'lose\'')
+            if 'pay_rate' not in players[0]:
+                raise ValueError('Players must have pay_rates')
+            
+            if 'service_time' not in players[0]:
+                if 'k' not in settings:
+                    raise ValueError('Period settings must have a k variable if players \
+                        do not define service times')
+                
+                if 'service_distribution' not in settings:
+                    data[i][j]['settings']['service_distribution'] = 1
+
+                sd = settings['service_distribution']
+                t = settings['duration']
+                k = settings['k']
+
+                vals = [random.randrange(sd) + 1 for p in players]
+                vals = [v / sum(vals) for v in vals]
+                vals = [round(v * k * t) for v in vals]
+                for k,_ in enumerate(players):
+                    data[i][j]['players'][k]['service_time'] = vals[k]
+    # print(data)
     return shuffle(data)
 
 '''
 Sample exported player dict:
-{ 'start_pos': 2, 'pay_rate': 0.03, 'service_time': 20},
+{ 'start_pos': 2, 'pay_rate': 0.03, 'service_time': 20, 'endowment': 5},
 '''

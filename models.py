@@ -43,28 +43,40 @@ class Constants(BaseConstants):
 
 class Player(BasePlayer):
 
-    # player attributes:
-    #   - time for all pages
-    #   - starting position in queue
-    #   - service time: time it takes to go through door once first in line
-    #   - pay rate
-    #   - total money accumulated at the end of the round
-    #   - list of transactions that the entire group has undergone
-    #     This is necessary because a page can return group forms or player forms but not both
-    #   - bid price? Later version
     time_Instructions = models.LongStringField()
     time_Queue = models.LongStringField()
     time_Service = models.LongStringField()
     time_BP = models.LongStringField()
     time_Results = models.LongStringField()
 
+    # amount of money player starts with
+    endowment = models.FloatField()
+    
+    # position in queue player starts at
     start_pos = models.IntegerField()
+    
+    # time player takes to get serviced
     service_time = models.FloatField()
+    
+    # time player is waiting in the queue before being serviced
+    waiting_time = models.FloatField()
+    
+    # $ per second player makes after being serviced, for gain mode
+    # OR $ per second player loses in waiting & service rooms, for lose mode
     pay_rate = models.FloatField()
-    accumulated = models.FloatField()
-    metadata = models.LongStringField()
+    
+    # method by which players swap: bid, swap, or cut
+    swap_method = models.StringField()
 
-    # bid_price = models.FloatField()
+    # method by which players accumulate money: gain or lose
+    pay_method = models.StringField()
+    
+    # money player leaves the round with
+    payoff = models.FloatField()
+    
+    # data holding information on the entire group's trades
+    # including bid prices, which are chosen each trade
+    metadata = models.LongStringField()
 
 class Group(RedwoodGroup):
 
@@ -295,6 +307,7 @@ class Subsession(BaseSubsession):
                 p.participant.vars[self.round_number]['pay_rate'] = g_data[p.id_in_group - 1]['pay_rate']
                 p.participant.vars[self.round_number]['service_time'] = g_data[p.id_in_group - 1]['service_time']
                 p.participant.vars[self.round_number]['start_pos'] = g_data[p.id_in_group - 1]['start_pos']
+                p.participant.vars[self.round_number]['endowment'] = g_data[p.id_in_group - 1]['endowment']
                 p.participant.vars[self.round_number]['group'] = g_index
                 p_data = {
                     'id': p.id_in_group,
@@ -303,6 +316,7 @@ class Subsession(BaseSubsession):
                     'last_trade_request': None,
                     'requested': None,
                     'requesting': None,
+                    'bid': None,
                     'accepted': 2,
                     'alert': Constants.alert_messages['none'],
                     'num_players_queue': Constants.num_players,
