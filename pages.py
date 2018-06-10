@@ -23,7 +23,7 @@ class QueueService(Page):
 
     form_model = 'player'
     form_fields = ['time_Queue', 'time_Service', 'start_pos', 'service_time',
-        'pay_rate', 'payoff', 'metadata', 'endowment', 'swap_method', 'pay_method',
+        'pay_rate', 'round_payoff', 'metadata', 'endowment', 'swap_method', 'pay_method',
         'waiting_time']
     
     def get_timeout_seconds(self):
@@ -47,6 +47,10 @@ class QueueService(Page):
                 [self.round_number - 1]['settings']['pay_method'],
             'endowment_': self.participant.vars[self.round_number]['endowment']
         }
+
+    def before_next_page(self):
+        if self.round_number == Constants.num_rounds:
+            self.player.set_payoffs()
 
 # round debrief, displayed after queue service page. Has no specific data yet
 class BetweenPages(Page):

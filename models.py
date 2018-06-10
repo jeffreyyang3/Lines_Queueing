@@ -4,6 +4,7 @@ from otree.api import (
 )
 from otree_redwood.models import Group as RedwoodGroup
 from . import config as config_py
+import random
 
 '''
 Eli Pandolfo <epandolf@ucsc.edu>
@@ -40,6 +41,7 @@ class Constants(BaseConstants):
         'next_self': 'You have entered the service room.',
         'next_queue': 'You have advanced one position in the queue',
         'next_queue2': 'You have advanced one position in the queue ',
+        'bad_bid': 'Your bid must be bewteen 0 and your current payoff',
         'none': '',
     }
 
@@ -74,11 +76,14 @@ class Player(BasePlayer):
     pay_method = models.StringField()
     
     # money player leaves the round with
-    payoff = models.FloatField()
+    round_payoff = models.FloatField()
     
     # data holding information on the entire group's trades
     # including bid prices, which are chosen each trade
     metadata = models.LongStringField()
+
+    def set_payoffs(self):
+        self.payoff = self.in_round(self.session.vars['pr']).round_payoff
 
 class Group(RedwoodGroup):
 
@@ -261,6 +266,7 @@ class Group(RedwoodGroup):
                         p1['in_trade'] = True
                         p2['in_trade'] = True
                         p2['requested'] = p1['id']
+                        p2['bid'] = p1['bid']
                         p1['alert'] = Constants.alert_messages['requesting']
                         p2['alert'] = Constants.alert_messages['requested']
                         event.value[str(p1['requesting'])] = p2
@@ -305,8 +311,12 @@ class Group(RedwoodGroup):
 
                         metadata['status'] = 'accepted'
                         
+
                     metadata['requester'] = p2['id']
                     metadata['requestee'] = p1['id']
+                    metadata['bid'] = p2['bid']
+                    p2['bid'] = None
+                    p1['bid'] = None
                     timestamp = p2['last_trade_request']    
                     p2['last_trade_request'] = None
                     event.value[p2_id] = p2
@@ -322,6 +332,9 @@ class Group(RedwoodGroup):
 class Subsession(BaseSubsession):
     
     def creating_session(self):
+        if self.round_number == 1:
+            self.session.vars['pr'] = random.randrange(Constants.num_rounds) + 1
+        
         self.group_randomly()
 
         # since there is no group.vars, all group data is stored in session.vars,

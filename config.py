@@ -56,8 +56,8 @@ data =  [
             [ # Group 1
                 { # Period 1
                     'settings': {
-                        'duration': 10000,
-                        'swap_method': 'bid',
+                        'duration': 30,
+                        'swap_method': 'cut',
                         'pay_method': 'lose',
                         'k': .5,
                         'service_distribution': 1,

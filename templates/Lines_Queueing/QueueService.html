@@ -23,6 +23,7 @@
         // because there is a wait page, this is when all players simultaneously arrive
         window.onload = function () {
             document.getElementById('arrive_time').value = new Date().toISOString()
+            channel.send(g_data)
         }
         
         // time when a player leaves the service room 
@@ -89,6 +90,7 @@
                     display_alert: '',
                     last_event: null,
                     waiting_time: 0,
+                    bid: null,
 
                     //group data
                     service_color: '#545353',
@@ -190,11 +192,11 @@
                                 this.time_spent_in_front += 1
                             }
                         }
-                        // if(this.position == 1 && this.num_players_service == 0)
-                        // {
-                        //     this.service_color = '#28b738'
-                        //     this.next()
-                        // }  
+                        if(this.position == 1 && this.num_players_service == 0)
+                        {
+                            this.service_color = '#28b738'
+                            this.next()
+                        }  
                     }
                 },
                 // used to determine whether buttons are clickable
@@ -280,6 +282,9 @@
             computed: {
                 trade_allowed: function() {
                     return vm.trade_allowed[this.comp_pos]
+                },
+                in_bid: function() {
+                    return vm.bid
                 }
             },
             methods: {
@@ -287,11 +292,13 @@
                     this.bid_clicked = true
                 },
                 send_click: function(bid) {
-                    // need to check that the shit is right (min, max), and issue alert if not
-                    // then deal with shit in models, also add alerts
                     this.bid_clicked = false
                     this.bid = document.getElementById('bid').value
-                    vm.request({pos: this.comp_pos, bid: this.bid})
+
+                    if(this.bid < 0 || this.bid > vm.payoff)
+                        vm.current_alert = 'Your bid must be bewteen 0 and your current payoff'
+                    else
+                        vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
                 }
             },
             template: `
@@ -313,11 +320,11 @@
                     <div class="row btn-row" v-if="swap_method == 'swap'">
                         
                         <button type="button" class="btn btn-large"
-                            style="margin-left: 20px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
+                            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
                             v-on:click="$emit('request', {pos: comp_pos, bid: null})">Swap</button>
                         
                         <button type="button" class="btn btn-large"
-                            style="margin-left: 20px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
+                            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
                             disabled>Swap</button>
                         
                         <div class="col-6">
@@ -335,11 +342,11 @@
                     <div class="row btn-row" v-if="swap_method == 'cut'">
                         
                         <button type="button" class="btn btn-large"
-                            style="margin-left: 20px;" v-if="comp_pos < self_pos && trade_allowed"
+                            style="margin-left: 27px;" v-if="comp_pos < self_pos && trade_allowed"
                             v-on:click="$emit('request', {pos: comp_pos, bid: null})">Cut</button>
                         
                         <button type="button" class="btn btn-large"
-                            style="margin-left: 20px;" v-if="comp_pos < self_pos && !trade_allowed"
+                            style="margin-left: 27px;" v-if="comp_pos < self_pos && !trade_allowed"
                             disabled>Cut</button>
                         
                     </div>
@@ -347,20 +354,26 @@
                     <div class="row btn-row" v-if="swap_method == 'bid'">
                         
                         <button type="button" class="btn btn-large"
-                            style="margin-left: 20px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
                             v-on:click="bid_click">Bid</button>
                         
                         <button type="button" class="btn btn-large"
-                            style="margin-left: 20px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
+                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
                             disabled>Bid</button>
 
                         <input v-if="bid_clicked" type="number" id="bid" max="vm.payoff" min="0"
-                            style="width: 100%" onKeyPress="if (event.keyCode == 13) return false"/>
+                            style="width: 58%; margin-left: 22px"
+                            onKeyPress="if (event.keyCode == 13) return false"/>
 
                          <button type="button" class="btn btn-large"
-                            style="margin-left: 20px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+                            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
                             v-on:click="send_click">Send</button>
                         
+                        <p v-if="comp_pos == self_pos + 1 && requested != null"
+                            style="width: 100%; text-align: center">
+                            Bid: { in_bid }
+                        <p>
+
                         <div class="col-6">
                             <button type="button" class="btn btn-large btn-yes"
                                 v-if="comp_pos == self_pos + 1 && requested != null"
@@ -418,6 +431,7 @@
             vm.num_players_queue = p.num_players_queue
             vm.num_players_service = p.num_players_service
             vm.last_event = parseInt(new Date().getTime() / 1000)
+            vm.bid = p.bid
             vm.metadata = g_data['metadata']
             //now, with reactivity, all of these fields should update in the html
             //need to do some logic that updates the actual html from here
@@ -530,7 +544,7 @@
         <!-- hidden inputs that submit all required data to server at end of round -->
         <input type="hidden" name="service_time" v-model="service_time"/>
         <input type="hidden" name="pay_rate" v-model="pay_rate"/>
-        <input type="hidden" name="payoff" v-model="payoff.toFixed(2)"/>
+        <input type="hidden" name="round_payoff" v-model="payoff.toFixed(2)"/>
         <input type="hidden" name="start_pos" v-model="start_pos"/>
         <input type="hidden" name="endowment" v-model="endowment"/>
         <input type="hidden" name="swap_method" v-model="swap_method"/>
