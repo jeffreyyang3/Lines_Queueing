@@ -191,6 +191,9 @@
                                 this.time_spent_in_front += 1
                             }
                         }
+
+                        // comment this if clause out if you want to test without anyone 
+                        // ever entering the service room
                         if(this.position == 1 && this.num_players_service == 0)
                         {
                             this.service_color = '#28b738'
@@ -360,7 +363,8 @@
                             style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
                             disabled>Bid</button>
 
-                        <input v-if="bid_clicked" type="number" id="bid" max="vm.payoff" min="0"
+                        <input v-if="bid_clicked && comp_pos == self_pos - 1" 
+                            type="number" id="bid" max="vm.payoff" min="0"
                             style="width: 58%; margin-left: 22px"
                             onKeyPress="if (event.keyCode == 13) return false"/>
 
@@ -430,6 +434,10 @@
             vm.num_players_queue = p.num_players_queue
             vm.num_players_service = p.num_players_service
             vm.last_event = parseInt(new Date().getTime() / 1000)
+            if(p.in_trade == false && p.bid != null) {
+                vm.payoff = Number(vm.payoff) + Number(p.bid)
+                p.bid = null
+            }
             vm.bid = p.bid
             vm.metadata = g_data['metadata']
             //now, with reactivity, all of these fields should update in the html

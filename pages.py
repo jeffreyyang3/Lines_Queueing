@@ -72,8 +72,8 @@ class Results(Page):
 # order in which pages are displayed. A page's is_displayed method
 # can override this, and not all pages defined above need to be included
 page_sequence = [
-    # Instructions,
-    # QueueServiceWaitPage,
+    Instructions,
+    QueueServiceWaitPage,
     QueueService,
     BetweenPages,
     Results

@@ -56,10 +56,10 @@ data =  [
             [ # Group 1
                 { # Period 1
                     'settings': {
-                        'duration': 30,
-                        'swap_method': 'cut',
-                        'pay_method': 'lose',
-                        'k': .5,
+                        'duration': 60,
+                        'swap_method': 'swap',
+                        'pay_method': 'gain',
+                        'k': .8,
                         'service_distribution': 1,
                     },
                     'players': [
@@ -67,57 +67,57 @@ data =  [
                         {'pay_rate': 0.04, 'endowment': 6},
                     ]
                 },
-                # { # Period 2
-                #     'settings': {
-                #         'duration': 100,
-                #         'swap_method': 'swap',
-                #         'pay_method': 'lose',
-                #         'k': .5,
-                #         'service_distribution': 5,
-                #     },
-                #     'players': [
-                #         {'pay_rate': 0.05, 'endowment': 5},
-                #         {'pay_rate': 0.04, 'endowment': 6},
-                #     ]
-                # },
-                # { # Period 3
-                #     'settings': {
-                #         'duration': 100,
-                #         'swap_method': 'swap',
-                #         'pay_method': 'gain',
-                #         'k': .5,
-                #         'service_distribution': 1,
-                #     },
-                #     'players': [
-                #         {'pay_rate': 0.01, 'endowment': 5, 'service_time': 10},
-                #         {'pay_rate': 0.02, 'endowment': 6, 'service_time': 20},
-                #     ]
-                # },
-                # { # Period 4
-                #     'settings': {
-                #         'duration': 100,
-                #         'swap_method': 'cut',
-                #         'pay_method': 'lose',
-                #         'k': .5,
-                #     },
-                #     'players': [
-                #         {'pay_rate': 0.05, 'endowment': 5, 'service_time': 10},
-                #         {'pay_rate': 0.04, 'endowment': 6, 'service_time': 20},
-                #     ]
-                # },
-                # { # Period 5
-                #     'settings': {
-                #         'duration': 100,
-                #         'swap_method': 'bid',
-                #         'pay_method': 'lose',
-                #         'k': .5,
-                #         'service_distribution': 10,
-                #     },
-                #     'players': [
-                #         {'pay_rate': 0.01, 'endowment': 5,},
-                #         {'pay_rate': 0.02, 'endowment': 6},
-                #     ]
-                # },
+                { # Period 2
+                    'settings': {
+                        'duration': 60,
+                        'swap_method': 'swap',
+                        'pay_method': 'lose',
+                        'k': .8,
+                        'service_distribution': 5,
+                    },
+                    'players': [
+                        {'pay_rate': 0.05, 'endowment': 5},
+                        {'pay_rate': 0.04, 'endowment': 6},
+                    ]
+                },
+                { # Period 3
+                    'settings': {
+                        'duration': 60,
+                        'swap_method': 'swap',
+                        'pay_method': 'gain',
+                        'k': .8,
+                        'service_distribution': 100,
+                    },
+                    'players': [
+                        {'pay_rate': 0.01, 'endowment': 5, 'service_time': 10},
+                        {'pay_rate': 0.02, 'endowment': 6, 'service_time': 20},
+                    ]
+                },
+                { # Period 4
+                    'settings': {
+                        'duration': 60,
+                        'swap_method': 'cut',
+                        'pay_method': 'lose',
+                        'k': .8,
+                    },
+                    'players': [
+                        {'pay_rate': 0.05, 'endowment': 5},
+                        {'pay_rate': 0.04, 'endowment': 6},
+                    ]
+                },
+                { # Period 5
+                    'settings': {
+                        'duration': 600,
+                        'swap_method': 'bid',
+                        'pay_method': 'gain',
+                        'k': .8,
+                        'service_distribution': 1,
+                    },
+                    'players': [
+                        {'pay_rate': 0.01, 'endowment': 5},
+                        {'pay_rate': 0.02, 'endowment': 6},
+                    ]
+                },
             ],
         ]
 

@@ -292,6 +292,8 @@ class Group(RedwoodGroup):
                         p1['accepted'] = 2
                         p1['alert'] = Constants.alert_messages['declining']
                         p2['alert'] = Constants.alert_messages['declined']
+                        p2['bid'] = None
+                        p1['bid'] = None
 
                         metadata['status'] = 'declined'
                         
@@ -308,15 +310,14 @@ class Group(RedwoodGroup):
                         p2['pos'] = temp
                         p1['alert'] = Constants.alert_messages['accepting']
                         p2['alert'] = Constants.alert_messages['accepted']
+                        p2['bid'] = -float(p1['bid'])
 
                         metadata['status'] = 'accepted'
                         
 
                     metadata['requester'] = p2['id']
                     metadata['requestee'] = p1['id']
-                    metadata['bid'] = p2['bid']
-                    p2['bid'] = None
-                    p1['bid'] = None
+                    metadata['bid'] = p1['bid']
                     timestamp = p2['last_trade_request']    
                     p2['last_trade_request'] = None
                     event.value[p2_id] = p2
