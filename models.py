@@ -16,7 +16,6 @@ Notes to ask Kristian:
 '''
 
 class Constants(BaseConstants):
-
     name_in_url = 'Lines_Queueing'
     participation_fee = c(5)
 
