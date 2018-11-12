@@ -34,7 +34,8 @@ import random
        
         'pay_method': 'gain',
         # treatment for paying
-            # gain: accumulated $ increases every second in paying room by pay_rate
+            # gain: accumulated $ increases every second in paying room (and not
+            # in the queue/service room) by pay_rate
             # lose: accumulated $ decreases every second in queue & service room
                 # by pay_rate
         
@@ -65,6 +66,8 @@ data =  [
                     'players': [
                         {'pay_rate': 0.05, 'endowment': 5},
                         {'pay_rate': 0.04, 'endowment': 6},
+                        {'pay_rate': 0.03, 'endowment': 7},
+                        {'pay_rate': 0.02, 'endowment': 8}
                     ]
                 },
                 { # Period 2
@@ -78,31 +81,24 @@ data =  [
                     'players': [
                         {'pay_rate': 0.05, 'endowment': 5},
                         {'pay_rate': 0.04, 'endowment': 6},
+                        {'pay_rate': 0.03, 'endowment': 7},
+                        {'pay_rate': 0.02, 'endowment': 8}
                     ]
                 },
                 { # Period 3
                     'settings': {
                         'duration': 60,
-                        'swap_method': 'swap',
-                        'pay_method': 'gain',
+                        'swap_method': 'bid',
+                        'pay_method': 'lose',
                         'k': .8,
                         'service_distribution': 100,
                     },
                     'players': [
                         {'pay_rate': 0.01, 'endowment': 5, 'service_time': 10},
                         {'pay_rate': 0.02, 'endowment': 6, 'service_time': 20},
-                    ]
-                },
-                { # Period 4
-                    'settings': {
-                        'duration': 60,
-                        'swap_method': 'cut',
-                        'pay_method': 'lose',
-                        'k': .8,
-                    },
-                    'players': [
-                        {'pay_rate': 0.05, 'endowment': 5},
-                        {'pay_rate': 0.04, 'endowment': 6},
+                        {'pay_rate': 0.03, 'endowment': 7, 'service_time': 30},
+                        {'pay_rate': 0.02, 'endowment': 8, 'service_time': 40}
+
                     ]
                 },
                 { # Period 5
@@ -116,6 +112,8 @@ data =  [
                     'players': [
                         {'pay_rate': 0.01, 'endowment': 5},
                         {'pay_rate': 0.02, 'endowment': 6},
+                        {'pay_rate': 0.03, 'endowment': 7},
+                        {'pay_rate': 0.04, 'endowment': 8},
                     ]
                 },
             ],
@@ -193,7 +191,10 @@ def export_data():
                 vals = [round(v * k * t) for v in vals]
                 for k,_ in enumerate(players):
                     data[i][j]['players'][k]['service_time'] = vals[k]
-    # print(data)
+
+    print('exported data is')
+    print(data[0][0])
+
     return shuffle(data)
 
 '''

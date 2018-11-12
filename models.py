@@ -100,6 +100,9 @@ class Group(RedwoodGroup):
     # first person to have entered the service room, and the last element in the list is the person
     # in the back of the queue.
     def queue_state(self, data):
+        print('data before sorting queue is:')
+        print(data)
+
         queue = {}
         for p in self.get_players():
             pp = data[str(p.id_in_group)]
@@ -309,10 +312,16 @@ class Group(RedwoodGroup):
                         p2['pos'] = temp
                         p1['alert'] = Constants.alert_messages['accepting']
                         p2['alert'] = Constants.alert_messages['accepted']
-                        p2['bid'] = -float(p1['bid'])
 
+                        # potential fix for typeError when accepting a swap
+                        # when swapMethod is 'swap'
+                        if swap_method == 'swap':
+                            p2['bid'] = None
+                        else:
+                            p2['bid'] = -float(p1['bid'])
+
+                        # p2['bid'] = -float(p1['bid'])
                         metadata['status'] = 'accepted'
-                        
 
                     metadata['requester'] = p2['id']
                     metadata['requestee'] = p1['id']
