@@ -15,6 +15,10 @@
 {% endblock %}
 
 {% block content %}
+    <p>Starting Line</p>
+    {% for player in displayStartLine %}
+        <li>{{ player|safe }}</li>
+    {% endfor %}
     
     <!-- form field for page load time. Value attribute gets set by script on window load,
         and the form gets returned here -->

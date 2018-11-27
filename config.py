@@ -53,11 +53,12 @@ import random
         
 '''
 
+"""
 data =  [
             [ # Group 1
                 { # Period 1
                     'settings': {
-                        'duration': 60,
+                        'duration': 45,
                         'swap_method': 'swap',
                         'pay_method': 'gain',
                         'k': .8,
@@ -72,7 +73,7 @@ data =  [
                 },
                 { # Period 2
                     'settings': {
-                        'duration': 60,
+                        'duration': 45,
                         'swap_method': 'swap',
                         'pay_method': 'lose',
                         'k': .8,
@@ -87,7 +88,7 @@ data =  [
                 },
                 { # Period 3
                     'settings': {
-                        'duration': 60,
+                        'duration': 45,
                         'swap_method': 'bid',
                         'pay_method': 'lose',
                         'k': .8,
@@ -103,7 +104,7 @@ data =  [
                 },
                 { # Period 5
                     'settings': {
-                        'duration': 600,
+                        'duration': 45,
                         'swap_method': 'bid',
                         'pay_method': 'gain',
                         'k': .8,
@@ -117,6 +118,29 @@ data =  [
                     ]
                 },
             ],
+        ]
+"""
+
+data =  [
+            [ # Group 1
+                { # Period 2: testing for double auction format
+                    'settings': {
+                        'duration': 300,
+                        'swap_method': 'double',
+                        'pay_method': 'gain',
+                        'k': .8,
+                        'service_distribution': 1,
+                    },
+                    'players': [
+                        {'pay_rate': 0.05, 'endowment': 5},
+                        {'pay_rate': 0.04, 'endowment': 6},
+                        {'pay_rate': 0.03, 'endowment': 7},
+                        {'pay_rate': 0.02, 'endowment': 8}
+                    ]
+                },
+            ],
+
+
         ]
 
 # shuffles order of groups, the order of periods within the group, and the order of players
@@ -160,10 +184,14 @@ def export_data():
             
             if 'swap_method' not in settings:
                 raise ValueError('Each period settings must have a swap_method variable')
-            
+
+            # For now, will comment out this swap_method check to allow for testing
+            # of the double auction
+            """
             if settings['swap_method'] not in ['cut', 'swap', 'bid']:
                 raise ValueError('Each period settings swap_method variable \
                     must be either \'bid\', \'swap\' or \'cut\'')
+            """
 
             if 'pay_method' not in settings:
                 raise ValueError('Each period settings must have a pay_method variable')

@@ -40,7 +40,7 @@ class Constants(BaseConstants):
         'next_self': 'You have entered the service room.',
         'next_queue': 'You have advanced one position in the queue',
         'next_queue2': 'You have advanced one position in the queue ',
-        'bad_bid': 'Your bid must be bewteen 0 and your current payoff',
+        'bad_bid': 'Your bid must be between 0 and your current payoff',
         'none': '',
     }
 
@@ -67,7 +67,9 @@ class Player(BasePlayer):
     # $ per second player makes after being serviced, for gain mode
     # OR $ per second player loses in waiting & service rooms, for lose mode
     pay_rate = models.FloatField()
-    
+
+    # Adding double action now (which is technically still swapping by bid, but
+    # for now will separate the two
     # method by which players swap: bid, swap, or cut
     swap_method = models.StringField()
 
@@ -202,7 +204,6 @@ class Group(RedwoodGroup):
                     p1['alert'] = Constants.alert_messages['next_self']
                     # service_dirty
                     if p1['in_trade']:
-
                         p2_id = str(p1['requested'])
                         p2 = event.value[p2_id]
                         metadata = {}
@@ -237,7 +238,6 @@ class Group(RedwoodGroup):
 
             # someone has initiated a trade request
             elif not p1['in_trade'] and p1['requesting'] != None:
-
                 if swap_method == 'cut':
                     p2 = event.value[str(p1['requesting'])]
                     temp = p2['pos']
@@ -313,8 +313,8 @@ class Group(RedwoodGroup):
                         p1['alert'] = Constants.alert_messages['accepting']
                         p2['alert'] = Constants.alert_messages['accepted']
 
-                        # potential fix for typeError when accepting a swap
-                        # when swapMethod is 'swap'
+                        # fix for typeError when accepting a swap during which
+                        # the swapMethod is 'swap'
                         if swap_method == 'swap':
                             p2['bid'] = None
                         else:

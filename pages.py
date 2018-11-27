@@ -58,7 +58,29 @@ class BetweenPages(Page):
     form_fields = ['time_BP']
 
     def vars_for_template(self):
-        return {'round': self.round_number}
+        all_players = self.group.get_players()
+        print("len of all_players is: ", len(all_players))
+        print("all_players is: ", all_players)
+
+        startLine = {}
+        displayStartLine = []
+
+        for p in all_players:
+            print("p.start_pos is: ", p.start_pos)
+            startLine[str(p.start_pos)] = p.id_in_group
+
+        """
+
+        print("start line is: ", str(startLine))
+
+        for i in range(len(startLine)):
+            displayStartLine.append(startLine[str(i + 1)])
+
+        print("displaystartline is: ", displayStartLine)
+        """
+
+        return {'round': self.round_number, 'startLine': displayStartLine,
+                'numPlayers': len(all_players), }
 
 # displays experiment results. Has no specific data set yet.
 class Results(Page):

@@ -297,16 +297,63 @@
                     this.bid_clicked = false
                     this.bid = document.getElementById('bid').value
 
-                    if(this.bid < 0 || this.bid > vm.payoff)
-                        vm.current_alert = 'Your bid must be between 0 and your current payoff'
-                    else
-                        vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
+
+                    // for player 1's bid, vm bid(2) will be null
+                    // when player 2 gives bid in response, vm bid(2) will be player 1's original bid
+
+                    if (this.swap_method == 'double') {
+                        console.log("double auction format in send_click")
+                        console.log("bid 1 is: " + this.bid)
+                        console.log("vm bid (2) is: " +vm.bid)
+
+                        if(this.bid < 0 || this.bid > vm.payoff){
+                            vm.current_alert = 'Your bid must be between 0 and your current payoff'
+                        }
+                        else {
+                            if (vm.bid != null) {
+                                if (vm.bid > this.bid) {
+                                    console.log("swap accepted")
+
+                                    console.log("vm bid before: " + vm.bid)
+                                    console.log("this.bid before :" + this.bid)
+
+                                    // this.bid = (vm.bid + this.bid) / 2
+                                    avg_bid = (this.bid + vm.bid) / 2;
+
+                                    console.log("vm bid is " + vm.bid)
+                                    console.log("this bid is " + this.bid)
+                                    console.log("avg bid is now: " + avg_bid)
+                                    this.bid = avg_bid
+
+                                    // vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
+                                    vm.respond(1)
+                                }
+                                else {
+                                    console.log("swap rejected!")
+                                    vm.respond(0)
+                                }
+                            }
+                            // only the requester has given his/her bid
+                            else {
+                                vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
+                            }
+                        }
+                    }
+
+                    else {
+                        if(this.bid < 0 || this.bid > vm.payoff){
+                                vm.current_alert = 'Your bid must be between 0 and your current payoff'
+                        }
+                        else {
+                            vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
+                        }
+                    }
                 }
             },
             template: `
                 <div v-if="num_players >= comp_pos">
                     <div class="row padded-row">
-                        <svg class="svg"> 
+                        <svg class="svg">
                             <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
                             <circle cx="45" cy="60" r="40" style="fill: #545353;" 
                                 v-if="comp_pos == self_pos"/>
@@ -354,16 +401,16 @@
                     </div>
 
                     <div class="row btn-row" v-if="swap_method == 'bid'">
-                        
+
                         <button type="button" class="btn btn-large"
                             style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
                             v-on:click="bid_click">Bid</button>
-                        
+
                         <button type="button" class="btn btn-large"
                             style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
                             disabled>Bid</button>
 
-                        <input v-if="bid_clicked && comp_pos == self_pos - 1" 
+                        <input v-if="bid_clicked && comp_pos == self_pos - 1"
                             type="number" id="bid" max="vm.payoff" min="0"
                             style="width: 58%; margin-left: 22px"
                             onKeyPress="if (event.keyCode == 13) return false"/>
@@ -371,7 +418,7 @@
                          <button type="button" class="btn btn-large"
                             style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
                             v-on:click="send_click">Send</button>
-                        
+
                         <p v-if="comp_pos == self_pos + 1 && requested != null"
                             style="width: 100%; text-align: center">
                             Bid: { in_bid }
@@ -381,11 +428,48 @@
                             <button type="button" class="btn btn-large btn-yes"
                                 v-if="comp_pos == self_pos + 1 && requested != null"
                                 onclick="vm.respond(1)">Yes</button>
-                        </div> 
+                        </div>
                         <div class="col-6">
                             <button type="button" class="btn btn-large btn-no"
                                 v-if="comp_pos == self_pos + 1 && requested != null"
                                 onclick="vm.respond(0)">No</button>
+                        </div>
+                    </div>
+
+                    <!-- DOUBLE AUCTION CODE BEGINS HERE -->
+                    <div class="row btn-row" v-if="swap_method == 'double'">
+                        <button type="button" class="btn btn-large"
+                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+                            v-on:click="bid_click">Bid</button>
+
+                        <button type="button" class="btn btn-large"
+                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
+                            disabled>Bid</button>
+
+                        <input v-if="bid_clicked && comp_pos == self_pos - 1"
+                            type="number" id="bid" max="vm.payoff" min="0"
+                            style="width: 58%; margin-left: 22px"
+                            onKeyPress="if (event.keyCode == 13) return false"/>
+
+                         <button type="button" class="btn btn-large"
+                            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+                            v-on:click="send_click">Send</button>
+
+                        <p v-if="comp_pos == self_pos + 1 && requested != null"
+                            style="width: 100%; text-align: center">
+                            <!-- Bid: { in_bid } -->
+                        <p>
+
+                        <input v-if="comp_pos == self_pos + 1 && requested != null"
+                            type="number" id="bid" max="vm.payoff" min="0"
+                            style="width: 58%; margin-left: 22px"
+                            onKeyPress="if (event.keyCode == 13) return false"/>
+
+                        <div class="col-6">
+                            <button type="button" class="btn btn-large btn-yes"
+                                style="margin-left: 22 px;"
+                                v-if="comp_pos == self_pos + 1 && requested != null"
+                                v-on:click="send_click">Send</button>
                         </div>
                     </div>
 
@@ -547,6 +631,8 @@
         channel="swap">
     </redwood-channel>
 
+
+
     <div id="app">
         <!-- hidden inputs that submit all required data to server at end of round -->
         <input type="hidden" name="service_time" v-model="service_time"/>
@@ -558,6 +644,10 @@
         <input type="hidden" name="pay_method" v-model="pay_method"/>
         <input type="hidden" name="waiting_time" v-model="waiting_time"/>
         <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
+
+        <!-- {% chat %} -->
+
+
         <div class="row" v-bind:style="{ height: .775 * h + 'px;' }">
             <div class="col-12">
                 <div class="row infobar">
