@@ -79,8 +79,14 @@ class BetweenPages(Page):
         print("displaystartline is: ", displayStartLine)
         """
 
-        return {'round': self.round_number, 'startLine': displayStartLine,
-                'numPlayers': len(all_players), }
+        return {
+            'round': self.round_number,
+            'startLine': displayStartLine,
+            'numPlayers': len(all_players), 
+            'history': self.player.metadata, 
+            'id': self.player.id_in_group,
+
+        }
 
 # displays experiment results. Has no specific data set yet.
 class Results(Page):

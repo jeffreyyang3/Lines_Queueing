@@ -125,7 +125,7 @@ data =  [
             [ # Group 1
                 { # Period 2: testing for double auction format
                     'settings': {
-                        'duration': 300,
+                        'duration': 40,
                         'swap_method': 'double',
                         'pay_method': 'gain',
                         'k': .8,

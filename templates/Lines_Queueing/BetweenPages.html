@@ -2,12 +2,62 @@
 {% load staticfiles otree %}
 
 {% block scripts %}
-    <script type="text/javascript">
-        window.onload = function () 
-        {
-            document.getElementById("arrive_time").value = (new Date()).toISOString();
+<script src="{% static "js/vue.js" %}"></script>
+<script type="text/javascript">
+    window.onload = function (){
+        document.getElementById("arrive_time").value = (new Date()).toISOString();
+    }
+    var app = new Vue({
+        el: '#app',
+        data: {
+            history: {{ history | json }},
+            sent: [],
+            received: [],
+            id: {{ id }},
+            displayed: []
+
+            
+        },
+        delimiters: ["{(", ")}"],
+        methods: {
+            parseHistory: function(data, displayed){
+                for(let action in data){
+                    console.log("cool")
+                    console.log(displayed)
+
+                    if(data[action]['requester'] == this.id){
+                        console.log("fdfdf")
+                        displayed.push({
+                            from: "You",
+                            to: `Player ${data[action].requestee}`,
+                            status: data[action].status,
+                            amount: data[action].bid
+                        })
+                    }
+                    else if(data[action]['requestee'] == this.id){
+                        displayed.push({
+                            from: `Player ${data[action].requestee}`,
+                            to: "You",
+                            status: data[action].status,
+                            amount: data[action].bid
+                        })
+
+                    }
+                    else{
+                        console.log("fdf")
+                    }
+                }
+                
+            }
+            
+
+        },
+        mounted: function(){
+            this.history = JSON.parse(this.history)
+            this.parseHistory(this.history, this.displayed)
         }
-    </script>
+    })
+</script>
 {% endblock %}
 
 {% block title %}
@@ -15,18 +65,38 @@
 {% endblock %}
 
 {% block content %}
-    <p>Starting Line</p>
-    {% for player in displayStartLine %}
+    
+<!--    {% for player in displayStartLine %}
         <li>{{ player|safe }}</li>
-    {% endfor %}
+    {% endfor %} -->
     
     <!-- form field for page load time. Value attribute gets set by script on window load,
         and the form gets returned here -->
     <input type="hidden" name="time_BP" id="arrive_time"/>
     
-    <p>
-        Put something here if you want.
-    </p>
+    <div id="app">
+
+    <table>
+        <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Amount</th>
+            <th>Result</th>
+        </tr>
+        <tr v-for="action in displayed">
+            <td> {( action.from )} </td>
+            <td> {( action.to )} </td>
+            <td> {( action.amount )} </td>
+            <td> {( action.status )}</td>
+        </tr>
+        
+    
+    
+    </table>
+    
+    
+    
+    </div>
 
     {% next_button %}
 
