@@ -86,6 +86,7 @@ class BetweenPages(Page):
             'history': self.player.metadata, 
             'id': self.player.id_in_group,
 
+
         }
 
 # displays experiment results. Has no specific data set yet.

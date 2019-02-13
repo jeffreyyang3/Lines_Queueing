@@ -222,12 +222,14 @@
                 request: function(obj) {
                     pos = obj['pos']
                     bid = obj['bid']
+                    message = obj['message']
                     for(var p in g_data) {
                         if (g_data.hasOwnProperty(p) && p != 'metadata') {
                             if(g_data[p]['pos'] == pos) {
                                 g_data[this.ID]['requesting'] = g_data[p]['id']
                                 g_data[this.ID]['last_trade_request'] = new Date().getTime()
                                 g_data[this.ID]['bid'] = bid
+                                g_data[this.ID]['message'] = message
                             }
                         }
                     }
@@ -279,6 +281,7 @@
                 return {
                     bid: null,
                     bid_clicked: false,
+                    message: String
                 }
             },
             computed: {
@@ -295,13 +298,18 @@
                 },
                 send_click: function(bid) {
                     this.bid_clicked = false
-                    this.bid = document.getElementById('bid').value
+                    //this.bid = document.getElementById('bid').value
+                    this.message = document.getElementById('inputMessage').value
+                    if(this.swap_method == 'swap'){
+                        alert("f")
+                        vm.request({pos: this.comp_pos, bid: null, message: this.message})
+                    }
 
 
                     // for player 1's bid, vm bid(2) will be null
                     // when player 2 gives bid in response, vm bid(2) will be player 1's original bid
 
-                    if (this.swap_method == 'double') {
+                    else if (this.swap_method == 'double') {
                         console.log("double auction format in send_click")
                         console.log("bid 1 is: " + this.bid)
                         console.log("vm bid (2) is: " +vm.bid)
@@ -345,7 +353,8 @@
                                 vm.current_alert = 'Your bid must be between 0 and your current payoff'
                         }
                         else {
-                            vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
+                            vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2), 
+                            message: this.message})
                         }
                     }
                 }
@@ -367,14 +376,26 @@
                     </div>
 
                     <div class="row btn-row" v-if="swap_method == 'swap'">
-                        
+                        <!--
                         <button type="button" class="btn btn-large"
                             style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
                             v-on:click="$emit('request', {pos: comp_pos, bid: null})">Swap</button>
+
+                        -->
+
+                        <button type="button" class="btn btn-large"
+                        style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
+                        v-on:click="send_click">Swap</button>
                         
                         <button type="button" class="btn btn-large"
                             style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
                             disabled>Swap</button>
+
+                        <input type="text" id="inputMessage" 
+                        v-if="comp_pos == self_pos - 1 && trade_allowed"
+                        value="writmessagehere">
+
+                        
                         
                         <div class="col-6">
                             <button type="button" class="btn btn-large btn-yes"
@@ -386,7 +407,9 @@
                                 v-if="comp_pos == self_pos + 1 && requested != null"
                                 onclick="vm.respond(0)">No</button>
                         </div>
-                    </div>
+                        <div id="displayMessage"type="text" class="col-6" 
+                        v-if="comp_pos == self_pos + 1 && requested != null"> placeholder </div>
+                        
 
                     <div class="row btn-row" v-if="swap_method == 'cut'">
                         

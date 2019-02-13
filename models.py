@@ -265,10 +265,14 @@ class Group(RedwoodGroup):
                     p2 = event.value[str(p1['requesting'])]
                     # requesting_clean
                     if not p2['in_trade']:
+                        print("CORRECT ")
+                        message = p1.get('message')
+                        print(message)
                         p1['in_trade'] = True
                         p2['in_trade'] = True
                         p2['requested'] = p1['id']
                         p2['bid'] = p1['bid']
+                        p2['message'] = message
                         p1['alert'] = Constants.alert_messages['requesting']
                         p2['alert'] = Constants.alert_messages['requested']
                         event.value[str(p1['requesting'])] = p2
