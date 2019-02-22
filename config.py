@@ -125,7 +125,7 @@ data =  [
             [ # Group 1
                 { # Period 2: testing for double auction format
                     'settings': {
-                        'duration': 120,
+                        'duration': 30000,
                         'swap_method': 'swap',
                         'pay_method': 'gain',
                         'k': .8,
@@ -205,7 +205,7 @@ def export_data():
             if 'service_time' not in players[0]:
                 if 'k' not in settings:
                     raise ValueError('Period settings must have a k variable if players \
-                        do not define service times')
+                        do not define service ti')
                 
                 if 'service_distribution' not in settings:
                     data[i][j]['settings']['service_distribution'] = 1
