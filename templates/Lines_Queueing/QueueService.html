@@ -19,6 +19,7 @@
 
     <script src="{% static "js/vue.js" %}"></script>
     <script type='text/javascript'>
+        var g_data = {{ data | json }}
         // time when user enters the queue room
         // because there is a wait page, this is when all players simultaneously arrive
         window.onload = function () {
@@ -68,10 +69,14 @@
         var vm = new Vue({
             delimiters: ['{', '}'],
             el: '#app',
+
             data: function() {
                 return {
 
                     // player data
+                    period: 0,
+                    paid: false,
+                    message: 'placeholder',
                     start_pos: {{ start_pos_ | json }},
                     pay_rate: {{ pay_rate_ | json }},
                     service_time: {{ service_time_ | json }},
@@ -93,6 +98,7 @@
 
                     //group data
                     service_color: '#545353',
+                    discrete: {{ discrete | json}},
                     swap_method: {{ swap_method_ | json}},
                     pay_method: {{ pay_method_ | json}},
                     start_time: null,
@@ -172,7 +178,16 @@
                         this.service_color = '#545353'
                     if(this.served == true) {
                         if (this.pay_method == 'gain') {
-                            this.payoff += this.pay_rate
+                            if(!this.discrete){
+                                this.payoff += this.pay_rate
+                            }
+                            else if(!this.paid){
+
+                                this.payoff += (10 - g_data[this.ID]['period'])
+                                this.paid = true
+                                
+                            }
+                            
                         }
                     }
                     else {
@@ -223,7 +238,7 @@
                     pos = obj['pos']
                     bid = obj['bid']
                     message = obj['message']
-                    for(var p in g_data) {
+                    for(let p in g_data) {
                         if (g_data.hasOwnProperty(p) && p != 'metadata') {
                             if(g_data[p]['pos'] == pos) {
                                 g_data[this.ID]['requesting'] = g_data[p]['id']
@@ -243,13 +258,21 @@
                 // called when someone's service time has run out; someone is about to enter the
                 // service room
                 next: function() {
-                    for(var p in g_data) {
+                    for(let p in g_data) {
+
                         if (g_data.hasOwnProperty(p) && p != 'metadata') {
+
+                            if(g_data[p]['period'] == undefined){
+
+                                g_data[p]['period'] = 0
+                            }
+                            g_data[p]['period'] += 1
                             g_data[p]['pos']--
                             g_data[p]['num_players_queue']--
                             g_data[p]['num_players_service']++
                             g_data[p]['next'] = true
                         }
+ 
                     }
                     this.update()
                 },
@@ -281,7 +304,7 @@
                 return {
                     bid: null,
                     bid_clicked: false,
-                    message: String
+             
                 }
             },
             computed: {
@@ -292,15 +315,18 @@
                     return vm.bid
                 }
             },
+    
+
             methods: {
                 bid_click: function() {
                     this.bid_clicked = true
                 },
                 send_click: function(bid) {
                     this.bid_clicked = false
-                    //this.bid = document.getElementById('bid').value
-                    this.message = document.getElementById('inputMessage').value
+                    
+                    
                     if(this.swap_method == 'swap'){
+                        this.message = document.getElementById('inputMessage').value
                         vm.request({pos: this.comp_pos, bid: null, message: this.message})
                     }
 
@@ -348,6 +374,7 @@
                     }
 
                     else {
+                        this.bid = document.getElementById('bid').value
                         if(this.bid < 0 || this.bid > vm.payoff){
                                 vm.current_alert = 'Your bid must be between 0 and your current payoff'
                         }
@@ -390,9 +417,10 @@
                             style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
                             disabled>Swap</button>
 
-                        <input type="text" id="inputMessage" 
-                        v-if="comp_pos == self_pos - 1 && trade_allowed"
-                        value="writmessagehere">
+                        <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed" placeholder=
+                        "Let them know why they should accept!" /> 
+                   
+           
 
                         
                         
@@ -406,8 +434,10 @@
                                 v-if="comp_pos == self_pos + 1 && requested != null"
                                 onclick="vm.respond(0)">No</button>
                         </div>
-                        <div id="displayMessage"type="text" class="col-6" 
-                        v-if="comp_pos == self_pos + 1 && requested != null"> { message } </div>
+                        <div id="displayMessage" class="col-6" 
+                        v-if="comp_pos == self_pos + 1 && requested != null"> 
+                        message from {comp_pos}: {message} </div>
+                    </div>
                         
 
                     <div class="row btn-row" v-if="swap_method == 'cut'">
@@ -421,8 +451,11 @@
                             disabled>Cut</button>
                         
                     </div>
-
+         
                     <div class="row btn-row" v-if="swap_method == 'bid'">
+                      
+
+                        
 
                         <button type="button" class="btn btn-large"
                             style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
@@ -496,6 +529,7 @@
                     </div>
 
                 </div>
+            </div>
             `
         })
 
@@ -516,7 +550,7 @@
         })
 
         // all group data pertinent to swaps and player states
-        var g_data = {{ data | json }}
+        
 
         // event listener to check for events sent by server over channel
         vm.channel.addEventListener('event', function(event) {
@@ -562,6 +596,32 @@
 
 {% block styles %}
     <style>
+        #inputMessage {
+            left: 50%;
+            z-index: 10000;
+            position: relative;
+            min-width: 200px;
+            transform: translateX(-50%);
+            margin: 10px;
+            border: 2px solid black;
+            border-radius: 3px;
+            font-size: 10px;
+
+        }
+        #displayMessage {
+            left: 50%;
+            z-index: 10000;
+            position: relative;
+            min-width: 200px;
+            transform: translateX(-50%);
+            margin: 10px;
+            border: 2px solid black;
+            border-radius: 3px;
+            font-size: 10px;
+            word-break: break-word;
+
+        }
+        
         .dev {
             border-style: solid;
             border-width: 1px;

@@ -45,6 +45,8 @@ class QueueService(Page):
                 [self.round_number - 1]['settings']['swap_method'],
             'pay_method_': Constants.config[g_index]
                 [self.round_number - 1]['settings']['pay_method'],
+            'discrete': Constants.config[g_index]
+                [self.round_number - 1]['settings']['discrete'],
             'endowment_': self.participant.vars[self.round_number]['endowment']
         }
 
