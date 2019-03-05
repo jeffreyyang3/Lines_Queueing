@@ -69,15 +69,24 @@
         var vm = new Vue({
             delimiters: ['{', '}'],
             el: '#app',
+            mounted: function(){
+                setTimeout(()=>{
+                    this.initialOver = true;
+                    
+                    
+                }, this.service_time * 1000)
+            },
 
             data: function() {
                 return {
+                    initialOver: false,
 
                     // player data
                     period: 0,
                     paid: false,
                     message: 'placeholder',
                     start_pos: {{ start_pos_ | json }},
+                    c: {{ c_ | json }},
                     pay_rate: {{ pay_rate_ | json }},
                     service_time: {{ service_time_ | json }},
                     time_spent_in_front: 0,
@@ -192,9 +201,10 @@
                     }
                     else {
                         this.waiting_time += 1
-                        if(this.pay_method == 'lose') {
+                        /*if(this.pay_method == 'lose') {
                             this.payoff -= this.pay_rate
-                        }
+                        }*/
+                        this.payoff -= this.c;
                         if(this.position == 0) {
                             if(this.time_spent_in_front == this.service_time - 1) {
                                 this.service_color = '#28b738'
@@ -209,8 +219,9 @@
 
                         // comment this if clause out if you want to test without anyone 
                         // ever entering the service room
-                        if(this.position == 1 && this.num_players_service == 0)
+                        if(this.position == 1 && this.num_players_service == 0 && this.initialOver)
                         {
+                    
                             this.service_color = '#28b738'
                             this.next()
                         }  
@@ -558,7 +569,8 @@
             // for debugging
             //console.log(event.detail.channel) // "swap"
             //console.log(new Date().getTime()) // timestamp
-            console.log(event.detail.payload) // test_order
+            console.trace(event.detail.payload) // test_order
+          
             //console.log(event.detail.payload['metadata']) // previous trade records
 
             g_data = event.detail.payload
@@ -645,7 +657,7 @@
         .infocol {
             text-align: center;
             color: #545353;
-            font-size: 18px;
+            font-size: 16px;
             font-family: sans-serif;
         }
         .alertbar {
@@ -740,8 +752,9 @@
                         {{ round_ }}
                     </div>
                     <div class="col-2 infocol infoborder">
-                        Endowment: <br>
-                        ${ endowment.toFixed(2) }
+                        Value: ${ endowment.toFixed(2) } <br>
+                        Cost: ${ c.toFixed(3) }
+                        
                     </div>
                     <div class="col-2 infocol infoborder">
                         Pay Rate: ({ pay_method })<br>
@@ -752,11 +765,14 @@
                         { service_time } seconds
                     </div>
                     <div class="col-2 infocol infoborder">
-                        Payoff: <br>
+                        Current Payoff: <br>
                         ${ payoff.toFixed(2) }
+
+                    
                     </div>
-                    <div class="col-2 infocol" style="font-size: 45px;
+                    <div class="col-2 infocol" style="font-size: 28px;
                         border-bottom: solid; border-width: 1px; border-color: #bbbbbb">
+                        <div style="font-size: 12px;"> Time Remaining:</div>
                         { time_remaining_period }
                     </div>
                 </div>

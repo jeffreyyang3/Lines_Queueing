@@ -1,5 +1,6 @@
 import random
-'''
+
+"""
     - Data holds the data for one session.
     - Each inner list represents a group.
     - Each inner inner dict represents a period. 
@@ -51,7 +52,7 @@ import random
             # If 10, service times are assigned randomly such that no person will have a service
             # time more than 10x longer than any other person
         
-'''
+"""
 
 """
 data =  [
@@ -121,70 +122,74 @@ data =  [
         ]
 """
 
-data =  [
-            [ # Group 1
-                { # Period 2: testing for double auction format
-                    'settings': {
-                        'duration': 120,
-                        'swap_method': 'swap',
-                        'pay_method': 'gain',
-                        'k': .8,
-                        'service_distribution': 1,
-                        'discrete': True
-                    },
-                    'players': [
-                        {'pay_rate': 0.05, 'endowment': 5},
-                        {'pay_rate': 0.04, 'endowment': 6},
-                        {'pay_rate': 0.03, 'endowment': 7},
-                        {'pay_rate': 0.02, 'endowment': 8}
-                    ]
-                },
+data = [
+    [  # Group 1
+        {  # Period 2: testing for double auction format
+            "settings": {
+                "duration": 100000,
+                "swap_method": "swap",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": True,
+            },
+            "players": [
+                {"pay_rate": 0.05, "endowment": 5, "c": 0.01},
+                {"pay_rate": 0.04, "endowment": 6, "c": 0.03},
+                {"pay_rate": 0.03, "endowment": 7, "c": 0.01},
+                {"pay_rate": 0.02, "endowment": 8, "c": 0.02},
             ],
-
-
-        ]
+        }
+    ]
+]
 
 # shuffles order of groups, the order of periods within the group, and the order of players
 # within the period.
 # also fills default start_pos's with random positions
 def shuffle(data):
-    for i,group in enumerate(data):
-        for j,period in enumerate(group):
-            if 'start_pos' not in data[i][j]['players'][0]:
-                positions = [n for n in range(1,len(period['players']) + 1)]
+    for i, group in enumerate(data):
+        for j, period in enumerate(group):
+            if "start_pos" not in data[i][j]["players"][0]:
+                positions = [n for n in range(1, len(period["players"]) + 1)]
                 random.shuffle(positions)
-                for k,player in enumerate(period['players']):
-                    data[i][j]['players'][k]['start_pos'] = positions[k]
-            random.shuffle(data[i][j]['players']) # shuffle order of players within periods
-        random.shuffle(data[i]) # shuffle order of periods withing groups
-    random.shuffle(data) # shuffle order of groups
+                for k, player in enumerate(period["players"]):
+                    data[i][j]["players"][k]["start_pos"] = positions[k]
+            random.shuffle(
+                data[i][j]["players"]
+            )  # shuffle order of players within periods
+        random.shuffle(data[i])  # shuffle order of periods withing groups
+    random.shuffle(data)  # shuffle order of groups
 
     return data
+
 
 # exports data to a csv format
 def export_csv(fname, data):
     pass
+
 
 # exports data to models.py
 # formats data to make it easier for models.py to parse it
 def export_data():
     # error handling & filling defaults
     for i, group in enumerate(data):
-        for j,period in enumerate(group):
-            if 'settings' not in period:
-                raise ValueError('Each period must contain settings dict')
-            
-            if 'players' not in period:
-                raise ValueError('Each period must contain players dict')
+        for j, period in enumerate(group):
+            if "settings" not in period:
+                raise ValueError("Each period must contain settings dict")
 
-            settings = period['settings']
-            players = period['players']
-            
-            if 'duration' not in settings:
-                raise ValueError('Each period settings must have a duration')
-            
-            if 'swap_method' not in settings:
-                raise ValueError('Each period settings must have a swap_method variable')
+            if "players" not in period:
+                raise ValueError("Each period must contain players dict")
+
+            settings = period["settings"]
+            players = period["players"]
+
+            if "duration" not in settings:
+                raise ValueError("Each period settings must have a duration")
+
+            if "swap_method" not in settings:
+                raise ValueError(
+                    "Each period settings must have a swap_method variable"
+                )
 
             # For now, will comment out this swap_method check to allow for testing
             # of the double auction
@@ -194,39 +199,45 @@ def export_data():
                     must be either \'bid\', \'swap\' or \'cut\'')
             """
 
-            if 'pay_method' not in settings:
-                raise ValueError('Each period settings must have a pay_method variable')
-            
-            if settings['pay_method'] not in ['gain', 'lose']:
-                raise ValueError('Each period settings pay_method variable \
-                    must be either \'gain\' or \'lose\'')
-            if 'pay_rate' not in players[0]:
-                raise ValueError('Players must have pay_rates')
-            
-            if 'service_time' not in players[0]:
-                if 'k' not in settings:
-                    raise ValueError('Period settings must have a k variable if players \
-                        do not define service ti')
-                
-                if 'service_distribution' not in settings:
-                    data[i][j]['settings']['service_distribution'] = 1
+            if "pay_method" not in settings:
+                raise ValueError("Each period settings must have a pay_method variable")
 
-                sd = settings['service_distribution']
-                t = settings['duration']
-                k = settings['k']
+            if settings["pay_method"] not in ["gain", "lose"]:
+                raise ValueError(
+                    "Each period settings pay_method variable \
+                    must be either 'gain' or 'lose'"
+                )
+            if "pay_rate" not in players[0]:
+                raise ValueError("Players must have pay_rates")
+
+            if "service_time" not in players[0]:
+                if "k" not in settings:
+                    raise ValueError(
+                        "Period settings must have a k variable if players \
+                        do not define service ti"
+                    )
+
+                if "service_distribution" not in settings:
+                    data[i][j]["settings"]["service_distribution"] = 1
+
+                sd = settings["service_distribution"]
+                t = settings["duration"]
+                k = settings["k"]
 
                 vals = [random.randrange(sd) + 1 for p in players]
                 vals = [v / sum(vals) for v in vals]
                 vals = [round(v * k * t) for v in vals]
-                for k,_ in enumerate(players):
-                    data[i][j]['players'][k]['service_time'] = vals[k]
+                for k, _ in enumerate(players):
+                    data[i][j]["players"][k]["service_time"] = vals[k]
 
-    print('exported data is')
+    print("exported data is")
     print(data[0][0])
 
     return shuffle(data)
 
-'''
+
+"""
 Sample exported player dict:
 { 'start_pos': 2, 'pay_rate': 0.03, 'service_time': 20, 'endowment': 5},
-'''
+"""
+
