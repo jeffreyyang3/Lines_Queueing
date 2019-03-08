@@ -134,7 +134,8 @@
                         10: true,
                     },
                     metadata: null,
-                    channel : document.getElementById('channel')
+                    channel : document.getElementById('channel'),
+                    
                 }
             },
             // Vue lifecycle hook: this function gets called when the Vue instance is created
@@ -144,6 +145,7 @@
                 setInterval(function() {
                     this.now = parseInt(new Date().getTime() / 1000)
                 }.bind(this), 999) // assume a 1 ms delay for all information transit and logic
+                this.paidCost = new Array(this.num_players).fill(false)
             },
             // computed functions get called every time one of their dependencies changes
             computed: {
@@ -153,7 +155,8 @@
                 },
                 h: function() {
                     return this.num_players > 6 ? window.innerHeight : window.innerHeight * 0.55
-                }
+                },
+                
             },
             // watch functions are called every time the property associated with the function name
             // changes
@@ -182,17 +185,21 @@
                 },
                 // gets called every time this.now is updated, every second
                 // updates player's service time served, and payoff
+                // session info: two levels of treatment: trade with money, or without money
+                // swap vs cut
+
                 now: function() {
+                    let period = g_data[this.ID]['period']
                     if(this.service_color == '#28b738')
                         this.service_color = '#545353'
-                    if(this.served == true) {
+                    if(this.served == true) { 
                         if (this.pay_method == 'gain') {
                             if(!this.discrete){
                                 this.payoff += this.pay_rate
                             }
                             else if(!this.paid){
 
-                                this.payoff += (10 - g_data[this.ID]['period'])
+                                this.payoff += (10 - period)
                                 this.paid = true
                                 
                             }
@@ -204,7 +211,15 @@
                         /*if(this.pay_method == 'lose') {
                             this.payoff -= this.pay_rate
                         }*/
-                        this.payoff -= this.c;
+
+                        if(!this.discrete){
+                            this.payoff -= this.c;
+                        }
+                        else if(!this.paidCost[period]){
+                            this.payoff -= this.c;
+                            this.paidCost[period] = true
+                        }
+                        
                         if(this.position == 0) {
                             if(this.time_spent_in_front == this.service_time - 1) {
                                 this.service_color = '#28b738'
@@ -265,6 +280,10 @@
                 respond: function(yesno) {
                     g_data[this.ID]['accepted'] = yesno
                     this.update()
+                },
+
+                displayMode: function(){
+                    return this.swap_method.charAt(0).toUpperCase() + this.swap_method.slice(1)
                 },
                 // called when someone's service time has run out; someone is about to enter the
                 // service room
@@ -428,8 +447,7 @@
                             style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
                             disabled>Swap</button>
 
-                        <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed" placeholder=
-                        "Let them know why they should accept!" /> 
+                        <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed"  /> 
                    
            
 
@@ -657,7 +675,7 @@
         .infocol {
             text-align: center;
             color: #545353;
-            font-size: 16px;
+            font-size: 13px;
             font-family: sans-serif;
         }
         .alertbar {
@@ -752,18 +770,17 @@
                         {{ round_ }}
                     </div>
                     <div class="col-2 infocol infoborder">
-                        Value: ${ endowment.toFixed(2) } <br>
-                        Cost: ${ c.toFixed(3) }
+                        Endowment: ${ endowment.toFixed(2) } <br>
+                        Cost: ${ c.toFixed(3) } <br>
+                        Value: ${ pay_rate }
                         
                     </div>
                     <div class="col-2 infocol infoborder">
-                        Pay Rate: ({ pay_method })<br>
-                        ${ pay_rate } / second
+                        Mode: { displayMode() } <br>
+                        Messaging: Enabled <br>
+                        Service Time:  { service_time }s
                     </div>
-                    <div class="col-2 infocol infoborder">
-                        Service Time: <br>
-                        { service_time } seconds
-                    </div>
+
                     <div class="col-2 infocol infoborder">
                         Current Payoff: <br>
                         ${ payoff.toFixed(2) }
@@ -775,6 +792,7 @@
                         <div style="font-size: 12px;"> Time Remaining:</div>
                         { time_remaining_period }
                     </div>
+                    <div class="col-2 infocol infoborder"> </div>
                 </div>
                 <div class="row alertbar">
                     <div class="col-8" v-bind:style="{ opacity: alert_opacity }">

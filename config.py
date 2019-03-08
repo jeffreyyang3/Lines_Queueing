@@ -125,8 +125,9 @@ data =  [
 data = [
     [  # Group 1
         {  # Period 2: testing for double auction format
+            #
             "settings": {
-                "duration": 100000,
+                "duration": 120,
                 "swap_method": "swap",
                 "pay_method": "gain",
                 "k": 0.8,
@@ -134,6 +135,7 @@ data = [
                 "discrete": True,
             },
             "players": [
+                # pay_rate is value
                 {"pay_rate": 0.05, "endowment": 5, "c": 0.01},
                 {"pay_rate": 0.04, "endowment": 6, "c": 0.03},
                 {"pay_rate": 0.03, "endowment": 7, "c": 0.01},
