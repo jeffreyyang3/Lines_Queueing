@@ -68,6 +68,9 @@ class QueueService(Page):
             "discrete": Constants.config[g_index][self.round_number - 1]["settings"][
                 "discrete"
             ],
+            "messaging": Constants.config[g_index][self.round_number - 1]["settings"][
+                "messaging"
+            ],
             "endowment_": self.participant.vars[self.round_number]["endowment"],
         }
 

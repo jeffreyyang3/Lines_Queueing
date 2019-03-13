@@ -108,6 +108,7 @@
                     //group data
                     service_color: '#545353',
                     discrete: {{ discrete | json}},
+                    messaging: {{ messaging | json}},
                     swap_method: {{ swap_method_ | json}},
                     pay_method: {{ pay_method_ | json}},
                     start_time: null,
@@ -215,9 +216,9 @@
                         if(!this.discrete){
                             this.payoff -= this.c;
                         }
-                        else if(!this.paidCost[period]){
+                        else if(!this.paidCost[period - 1]){
                             this.payoff -= this.c;
-                            this.paidCost[period] = true
+                            this.paidCost[period - 1] = true
                         }
                         
                         if(this.position == 0) {
@@ -329,7 +330,8 @@
         */
         Vue.component( 'q-bubble', {
             delimiters: ['{', '}'],
-            props: ['num_players', 'comp_pos', 'self_pos', 'requested', 'swap_method', 'message'],
+            props: ['num_players', 'comp_pos', 'self_pos', 'requested', 'swap_method',
+            'swap', 'message'],
             data: function() {
                 return {
                     bid: null,
@@ -353,10 +355,14 @@
                 },
                 send_click: function(bid) {
                     this.bid_clicked = false
+                    this.message = "No Message (this should not be visible)"
+                    if(this.swap){
+                        this.message = document.getElementById('inputMessage').value
+                    }
                     
                     
                     if(this.swap_method == 'swap'){
-                        this.message = document.getElementById('inputMessage').value
+                        
                         vm.request({pos: this.comp_pos, bid: null, message: this.message})
                     }
 
@@ -417,148 +423,155 @@
             },
             template: `
                 <div v-if="num_players >= comp_pos">
-                    <div class="row padded-row">
-                        <svg class="svg">
-                            <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
-                            <circle cx="45" cy="60" r="40" style="fill: #545353;" 
-                                v-if="comp_pos == self_pos"/>
-                            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
-                                { comp_pos }
-                            </text>
-                            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
-                                { comp_pos }
-                            </text>
-                        </svg>
-                    </div>
+    <div class="row padded-row">
+        <svg class="svg">
+            <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
+            <circle cx="45" cy="60" r="40" style="fill: #545353;" 
+                v-if="comp_pos == self_pos"/>
+            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
+                { comp_pos }
+            </text>
+            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
+                { comp_pos }
+            </text>
+        </svg>
+    </div>
 
-                    <div class="row btn-row" v-if="swap_method == 'swap'">
-                        <!--
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="$emit('request', {pos: comp_pos, bid: null})">Swap</button>
+    <div class="row btn-row" v-if="swap_method == 'swap'">
+        <!--
+        <button type="button" class="btn btn-large"
+            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="$emit('request', {pos: comp_pos, bid: null})">Swap</button>
 
-                        -->
+        -->
 
-                        <button type="button" class="btn btn-large"
-                        style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
-                        v-on:click="send_click">Swap</button>
-                        
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
-                            disabled>Swap</button>
+        <button type="button" class="btn btn-large"
+        style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
+        v-on:click="send_click">Swap</button>
+        
+        <button type="button" class="btn btn-large"
+            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
+            disabled>Swap</button>
 
-                        <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed"  /> 
-                   
-           
+        <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed && swap"  /> 
+   
 
-                        
-                        
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-yes"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                onclick="vm.respond(1)">Yes</button>
-                        </div> 
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-no"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                onclick="vm.respond(0)">No</button>
-                        </div>
-                        <div id="displayMessage" class="col-6" 
-                        v-if="comp_pos == self_pos + 1 && requested != null"> 
-                        message from {comp_pos}: {message} </div>
-                    </div>
-                        
 
-                    <div class="row btn-row" v-if="swap_method == 'cut'">
-                        
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="comp_pos < self_pos && trade_allowed"
-                            v-on:click="$emit('request', {pos: comp_pos, bid: null})">Cut</button>
-                        
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="comp_pos < self_pos && !trade_allowed"
-                            disabled>Cut</button>
-                        
-                    </div>
-         
-                    <div class="row btn-row" v-if="swap_method == 'bid'">
-                      
+        
+        
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-yes"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(1)">Yes</button>
+        </div> 
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-no"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(0)">No</button>
+        </div>
+        <div id="displayMessage" class="col-6" 
+        v-if="comp_pos == self_pos + 1 && requested != null && messaging"> 
+        message from {comp_pos}: {message} </div>
+    </div>
+        
 
-                        
+    <div class="row btn-row" v-if="swap_method == 'cut'">
+        
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="comp_pos < self_pos && trade_allowed"
+            v-on:click="$emit('request', {pos: comp_pos, bid: null})">Cut</button>
+        
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="comp_pos < self_pos && !trade_allowed"
+            disabled>Cut</button>
+        
+    </div>
 
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="bid_click">Bid</button>
+    <div class="row btn-row" v-if="swap_method == 'bid'">
+      
 
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
-                            disabled>Bid</button>
+        
 
-                        <input v-if="bid_clicked && comp_pos == self_pos - 1"
-                            type="number" id="bid" max="vm.payoff" min="0"
-                            style="width: 58%; margin-left: 22px"
-                            onKeyPress="if (event.keyCode == 13) return false"/>
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="bid_click">Bid</button>
 
-                         <button type="button" class="btn btn-large"
-                            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="send_click">Send</button>
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
+            disabled>Bid</button>
 
-                        <p v-if="comp_pos == self_pos + 1 && requested != null"
-                            style="width: 100%; text-align: center">
-                            Bid: { in_bid }
-                        <p>
+        <input v-if="bid_clicked && comp_pos == self_pos - 1"
+            type="number" id="bid" max="vm.payoff" min="0"
+            style="width: 58%; margin-left: 22px; margin-bottom: 5px;"
+            onKeyPress="if (event.keyCode == 13) return false"/>
 
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-yes"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                onclick="vm.respond(1)">Yes</button>
-                        </div>
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-no"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                onclick="vm.respond(0)">No</button>
-                        </div>
-                    </div>
+        <textarea id="inputMessage" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"  /> 
 
-                    <!-- DOUBLE AUCTION CODE BEGINS HERE -->
-                    <div class="row btn-row" v-if="swap_method == 'double'">
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="bid_click">Bid</button>
+         <button type="button" class="btn btn-large"
+            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="send_click">Send</button>
 
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
-                            disabled>Bid</button>
+        <p v-if="comp_pos == self_pos + 1 && requested != null"
+            style="width: 100%; text-align: center">
+            Bid: { in_bid }
+        <p>
+        <div id="displayMessage" class="col-6" 
+        v-if="comp_pos == self_pos + 1 && requested != null && messaging"> 
+        message from {comp_pos}: {message} </div>
 
-                        <input v-if="bid_clicked && comp_pos == self_pos - 1"
-                            type="number" id="bid" max="vm.payoff" min="0"
-                            style="width: 58%; margin-left: 22px"
-                            onKeyPress="if (event.keyCode == 13) return false"/>
 
-                         <button type="button" class="btn btn-large"
-                            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="send_click">Send</button>
 
-                        <p v-if="comp_pos == self_pos + 1 && requested != null"
-                            style="width: 100%; text-align: center">
-                            <!-- Bid: { in_bid } -->
-                        <p>
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-yes"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(1)">Yes</button>
+        </div>
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-no"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(0)">No</button>
+        </div>
+    </div>
 
-                        <input v-if="comp_pos == self_pos + 1 && requested != null"
-                            type="number" id="bid" max="vm.payoff" min="0"
-                            style="width: 58%; margin-left: 22px"
-                            onKeyPress="if (event.keyCode == 13) return false"/>
+    <!-- DOUBLE AUCTION CODE BEGINS HERE -->
+    <div class="row btn-row" v-if="swap_method == 'double'">
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="bid_click">Bid</button>
 
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-yes"
-                                style="margin-left: 22 px;"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                v-on:click="send_click">Send</button>
-                        </div>
-                    </div>
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
+            disabled>Bid</button>
 
-                </div>
-            </div>
+        <input v-if="bid_clicked && comp_pos == self_pos - 1"
+            type="number" id="bid" max="vm.payoff" min="0"
+            style="width: 58%; margin-left: 22px"
+            onKeyPress="if (event.keyCode == 13) return false"/>
+
+         <button type="button" class="btn btn-large"
+            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="send_click">Send</button>
+
+        <p v-if="comp_pos == self_pos + 1 && requested != null"
+            style="width: 100%; text-align: center">
+            <!-- Bid: { in_bid } -->
+        <p>
+
+        <input v-if="comp_pos == self_pos + 1 && requested != null"
+            type="number" id="bid" max="vm.payoff" min="0"
+            style="width: 58%; margin-left: 22px"
+            onKeyPress="if (event.keyCode == 13) return false"/>
+
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-yes"
+                style="margin-left: 22 px;"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                v-on:click="send_click">Send</button>
+        </div>
+    </div>
+
+</div>
+</div>
             `
         })
 
@@ -675,7 +688,7 @@
         .infocol {
             text-align: center;
             color: #545353;
-            font-size: 13px;
+            font-size: 12px;
             font-family: sans-serif;
         }
         .alertbar {
@@ -760,7 +773,9 @@
         <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
 
         <!-- {% chat %} -->
-
+        <ol>
+            <li v-for="val in paidCost">{ val }</li>
+        </ol>
 
         <div class="row" v-bind:style="{ height: .775 * h + 'px;' }">
             <div class="col-12">
@@ -777,7 +792,7 @@
                     </div>
                     <div class="col-2 infocol infoborder">
                         Mode: { displayMode() } <br>
-                        Messaging: Enabled <br>
+                        Messaging: <span v-if="messaging"> Enabled </span> <span v-else>Disabled</span> <br>
                         Service Time:  { service_time }s
                     </div>
 
@@ -804,7 +819,8 @@
                         <div class="row" v-bind:style="{ height: (.6625 * h - 2) + 'px' }">
                             <div class="col-2 queue-1">
                                 <q-bubble
-                                    v-bind:message="message"
+                                    v-bind:message="message" 
+                                    v-bind:messaging="messaging"
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="5"
                                     v-bind:self_pos="position"
@@ -813,7 +829,8 @@
                                     v-on:request="request">
                                 </q-bubble>
                                 <q-bubble
-                                    v-bind:message="message"
+                                    v-bind:message="message" 
+                                    v-bind:messaging="messaging"
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="6"
                                     v-bind:self_pos="position"
@@ -824,7 +841,8 @@
                             </div>
                             <div class="col-2 queue-2">
                                 <q-bubble
-                                    v-bind:message="message"
+                                    v-bind:message="message" 
+                                    v-bind:messaging="messaging"
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="4"
                                     v-bind:self_pos="position"
@@ -834,7 +852,8 @@
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message"
+                                    v-bind:message="message" 
+                                    v-bind:messaging="messaging"
                                     comp_pos="7"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -845,7 +864,8 @@
                             <div class="col-2 queue-1">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message"
+                                    v-bind:message="message" 
+                                    v-bind:messaging="messaging"
                                     comp_pos="3"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -854,7 +874,7 @@
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message"
+                                    v-bind:message="message" v-bind:messaging="messaging"
                                     comp_pos="8"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -865,7 +885,7 @@
                             <div class="col-2 queue-2">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message"
+                                    v-bind:message="message" v-bind:messaging="messaging"
                                     comp_pos="2"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -874,7 +894,7 @@
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message"
+                                    v-bind:message="message" v-bind:messaging="messaging"
                                     comp_pos="9"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -885,7 +905,7 @@
                             <div class="col-2 queue-1">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message"
+                                    v-bind:message="message" v-bind:messaging="messaging"
                                     comp_pos="1"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"

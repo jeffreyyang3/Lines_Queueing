@@ -127,12 +127,13 @@ data = [
         {  # Period 2: testing for double auction format
             #
             "settings": {
-                "duration": 120,
-                "swap_method": "swap",
+                "duration": 60,
+                "swap_method": "bid",
                 "pay_method": "gain",
                 "k": 0.8,
                 "service_distribution": 1,
                 "discrete": True,
+                "messaging": False,
             },
             "players": [
                 # pay_rate is value
