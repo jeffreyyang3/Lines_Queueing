@@ -1,5 +1,6 @@
 from ._builtin import Page, WaitPage
 from .models import Constants
+import json
 
 """
 Eli Pandolfo <epandolf@ucsc.edu>
@@ -47,10 +48,13 @@ class QueueService(Page):
 
     def vars_for_template(self):
         g_index = self.participant.vars[self.round_number]["group"]
+        self.group.groupTrades = "bongoman"
+
         return {
             "round_time_": Constants.config[g_index][self.round_number - 1]["settings"][
                 "duration"
             ],
+            "groupTrades": self.group.groupTrades,
             "pay_rate_": self.participant.vars[self.round_number]["pay_rate"],
             "c_": self.participant.vars[self.round_number]["c"],
             "service_time_": self.participant.vars[self.round_number]["service_time"],
@@ -115,10 +119,23 @@ class BetweenPages(Page):
         }
 
 
+class AfterService(WaitPage):
+    def after_all_players_arrive(self):
+        allData = {}
+        for p in self.group.get_players():
+            allData[p.id_in_group] = p.metadata
+
+        for p in self.group.get_players():
+            p.allMetadata = json.dumps(allData)
+
+
 # displays experiment results. Has no specific data set yet.
 class Results(Page):
     form_model = "player"
     form_fields = ["time_Results"]
+
+    def vars_for_template(self):
+        return {"data": self.player.allMetadata}
 
     def is_displayed(self):
         return self.round_number == Constants.num_rounds
@@ -130,6 +147,7 @@ page_sequence = [
     Instructions,
     QueueServiceWaitPage,
     QueueService,
+    AfterService,
     BetweenPages,
     Results,
 ]

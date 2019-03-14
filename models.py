@@ -89,6 +89,7 @@ class Player(BasePlayer):
     # data holding information on the entire group's trades
     # including bid prices, which are chosen each trade
     metadata = models.LongStringField()
+    allMetadata = models.LongStringField()
 
     def set_payoffs(self):
         self.payoff = self.in_round(self.session.vars["pr"]).round_payoff
@@ -99,6 +100,7 @@ class Group(RedwoodGroup):
     # needed for otree redwood; this should replace the need for the get_timeout_seconds method
     # in pages.QueueService, but for some reason does has no effect. This is essentially a wrapper
     # for the timeout_seconds variable anyway.
+
     def period_length(self):
         g_index = self.get_player_by_id(1).participant.vars[self.round_number]["group"]
         return Constants.config[g_index][self.round_number - 1]["settings"]["duration"]

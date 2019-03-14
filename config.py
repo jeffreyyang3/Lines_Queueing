@@ -132,8 +132,8 @@ data = [
                 "pay_method": "gain",
                 "k": 0.8,
                 "service_distribution": 1,
-                "discrete": True,
-                "messaging": False,
+                "discrete": False,
+                "messaging": True,
             },
             "players": [
                 # pay_rate is value
