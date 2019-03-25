@@ -333,7 +333,7 @@
         Vue.component( 'q-bubble', {
             delimiters: ['{', '}'],
             props: ['num_players', 'comp_pos', 'self_pos', 'requested', 'swap_method',
-            'swap', 'message'],
+            'swap', 'message', 'messaging'],
             data: function() {
                 return {
                     bid: null,
@@ -357,8 +357,8 @@
                 },
                 send_click: function(bid) {
                     this.bid_clicked = false
-                    this.message = "No Message (this should not be visible)"
-                    if(this.swap){
+                    this.message = "No Message (should not be visible)"
+                    if(this.messaging){
                         this.message = document.getElementById('inputMessage').value
                     }
                     
@@ -455,7 +455,7 @@
             style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
             disabled>Swap</button>
 
-        <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed && swap"  /> 
+        <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed && messaging"  /> 
    
 
 
@@ -490,6 +490,7 @@
     </div>
 
     <div class="row btn-row" v-if="swap_method == 'bid'">
+        
       
 
         
@@ -516,7 +517,7 @@
         <p v-if="comp_pos == self_pos + 1 && requested != null"
             style="width: 100%; text-align: center">
             Bid: { in_bid }
-        <p>
+        <p> 
         <div id="displayMessage" class="col-6" 
         v-if="comp_pos == self_pos + 1 && requested != null && messaging"> 
         message from {comp_pos}: {message} </div>
@@ -624,7 +625,7 @@
             if(p.in_trade == false && p.bid != null) {
                 vm.payoff = Number(vm.payoff) + Number(p.bid)
                 p.bid = null
-                vm.tracker += 1
+      
             }
             vm.bid = p.bid
             vm.metadata = g_data['metadata']
@@ -777,7 +778,7 @@
         <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
 
         <!-- {% chat %} -->
-        <h5> { tracker } </h5>
+     
 
         <div class="row" v-bind:style="{ height: .775 * h + 'px;' }">
             <div class="col-12">

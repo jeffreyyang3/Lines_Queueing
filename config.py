@@ -127,7 +127,7 @@ data = [
         {  # Period 2: testing for double auction format
             #
             "settings": {
-                "duration": 60,
+                "duration": 120,
                 "swap_method": "bid",
                 "pay_method": "gain",
                 "k": 0.8,
@@ -149,6 +149,8 @@ data = [
 # shuffles order of groups, the order of periods within the group, and the order of players
 # within the period.
 # also fills default start_pos's with random positions
+
+
 def shuffle(data):
     for i, group in enumerate(data):
         for j, period in enumerate(group):
@@ -203,7 +205,8 @@ def export_data():
             """
 
             if "pay_method" not in settings:
-                raise ValueError("Each period settings must have a pay_method variable")
+                raise ValueError(
+                    "Each period settings must have a pay_method variable")
 
             if settings["pay_method"] not in ["gain", "lose"]:
                 raise ValueError(
@@ -243,4 +246,3 @@ def export_data():
 Sample exported player dict:
 { 'start_pos': 2, 'pay_rate': 0.03, 'service_time': 20, 'endowment': 5},
 """
-

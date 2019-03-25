@@ -49,6 +49,13 @@ class QueueService(Page):
     def vars_for_template(self):
         g_index = self.participant.vars[self.round_number]["group"]
         self.group.groupTrades = "bongoman"
+        self.player.discrete = Constants.config[g_index][self.round_number -
+                                                         1]["settings"]["discrete"]
+        self.player.messaging = Constants.config[g_index][self.round_number -
+                                                          1]["settings"]["messaging"]
+        self.player.cost = self.participant.vars[self.round_number]['c']
+        print("XXXXXX")
+        print(self.player.messaging)
 
         return {
             "round_time_": Constants.config[g_index][self.round_number - 1]["settings"][
@@ -69,12 +76,8 @@ class QueueService(Page):
             "pay_method_": Constants.config[g_index][self.round_number - 1]["settings"][
                 "pay_method"
             ],
-            "discrete": Constants.config[g_index][self.round_number - 1]["settings"][
-                "discrete"
-            ],
-            "messaging": Constants.config[g_index][self.round_number - 1]["settings"][
-                "messaging"
-            ],
+            "discrete": self.player.discrete,
+            "messaging": self.player.messaging,
             "endowment_": self.participant.vars[self.round_number]["endowment"],
         }
 

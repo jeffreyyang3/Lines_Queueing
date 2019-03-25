@@ -31,7 +31,8 @@
                             from: "You",
                             to: `Player ${data[action].requestee}`,
                             status: data[action].status,
-                            amount: data[action].bid
+                            amount: data[action].bid,
+                            message: data[action].message
                         })
                     }
                     else if(data[action]['requestee'] == this.id){
@@ -39,7 +40,8 @@
                             from: `Player ${data[action].requestee}`,
                             to: "You",
                             status: data[action].status,
-                            amount: data[action].bid
+                            amount: data[action].bid,
+                            message: data[action].message
                         })
 
                     }
@@ -79,13 +81,15 @@
             <th>From</th>
             <th>To</th>
             <th>Amount</th>
+            <th>Message</th>
             <th>Result</th>
         </tr>
         <tr v-for="action in displayed">
             <td> {( action.from )} </td>
             <td> {( action.to )} </td>
             <td> {( action.amount )} </td>
-            <td> {( action.status )}</td>
+            <td> {(action.message )} </td>
+            <td> {( action.status )} </td>
         </tr>
         
     

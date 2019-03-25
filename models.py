@@ -91,6 +91,13 @@ class Player(BasePlayer):
     metadata = models.LongStringField()
     allMetadata = models.LongStringField()
 
+    # discrete and messaging enabled/disabled
+    discrete = models.BooleanField()
+    messaging = models.BooleanField()
+    # c (cost per time not in service)
+    cost = models.FloatField()
+
+
     def set_payoffs(self):
         self.payoff = self.in_round(self.session.vars["pr"]).round_payoff
 
@@ -344,6 +351,7 @@ class Group(RedwoodGroup):
 
                     metadata["requester"] = p2["id"]
                     metadata["requestee"] = p1["id"]
+                    metadata["message"] = p1.get("message")
                     metadata["bid"] = p1["bid"]
                     timestamp = p2["last_trade_request"]
                     p2["last_trade_request"] = None
