@@ -72,16 +72,17 @@
             mounted: function(){
                 setTimeout(()=>{
                     this.initialOver = true;
-                    
-                    
                 }, this.service_time * 1000)
             },
 
             data: function() {
                 return {
                     initialOver: false,
+                    
+                    
 
                     // player data
+                    paidBids: [],
                     period: 0,
                     paid: false,
                     message: 'placeholder',
@@ -302,6 +303,7 @@
                             g_data[p]['num_players_queue']--
                             g_data[p]['num_players_service']++
                             g_data[p]['next'] = true
+                            g_data[p]['bid'] = this.bid
                         }
  
                     }
@@ -600,7 +602,7 @@
             // for debugging
             //console.log(event.detail.channel) // "swap"
             //console.log(new Date().getTime()) // timestamp
-            console.trace(event.detail.payload) // test_order
+            // console.trace(event.detail.payload) // test_order
           
             //console.log(event.detail.payload['metadata']) // previous trade records
 
@@ -617,10 +619,12 @@
             vm.current_alert = p.alert
             vm.num_players_queue = p.num_players_queue
             vm.num_players_service = p.num_players_service
+            
             vm.last_event = parseInt(new Date().getTime() / 1000)
             if(p.in_trade == false && p.bid != null) {
                 vm.payoff = Number(vm.payoff) + Number(p.bid)
                 p.bid = null
+                vm.tracker += 1
             }
             vm.bid = p.bid
             vm.metadata = g_data['metadata']
@@ -773,9 +777,7 @@
         <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
 
         <!-- {% chat %} -->
-        <ol>
-            <li v-for="val in paidCost">{ val }</li>
-        </ol>
+        <h5> { tracker } </h5>
 
         <div class="row" v-bind:style="{ height: .775 * h + 'px;' }">
             <div class="col-12">
