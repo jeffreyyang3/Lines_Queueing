@@ -78,6 +78,7 @@
             data: function() {
                 return {
                     initialOver: false,
+                    initialPaid: false,
                     
                     
 
@@ -88,7 +89,7 @@
                     message: 'placeholder',
                     start_pos: {{ start_pos_ | json }},
                     c: {{ c_ | json }},
-                    pay_rate: {{ pay_rate_ | json }},
+                    pay_rate: {{ pay_rate_ | json }}, // pay rate == value
                     service_time: {{ service_time_ | json }},
                     time_spent_in_front: 0,
                     ID: {{ id | json }},
@@ -191,35 +192,41 @@
                 // swap vs cut
 
                 now: function() {
+                    console.log(this.position)
+                    
                     let period = g_data[this.ID]['period']
                     if(this.service_color == '#28b738')
                         this.service_color = '#545353'
-                    if(this.served == true) { 
+                    if(this.served == true) { //entered the service room
                         if (this.pay_method == 'gain') {
                             if(!this.discrete){
                                 this.payoff += this.pay_rate
                             }
                             else if(!this.paid){
 
-                                this.payoff += (10 - period)
+                                this.payoff += this.pay_rate
                                 this.paid = true
                                 
                             }
                             
                         }
                     }
-                    else {
+                    else {  //still waiting outside
+          
                         this.waiting_time += 1
                         /*if(this.pay_method == 'lose') {
                             this.payoff -= this.pay_rate
                         }*/
 
                         if(!this.discrete){
-                            this.payoff -= this.c;
+                            this.payoff -= this.c
                         }
                         else if(!this.paidCost[period - 1]){
-                            this.payoff -= this.c;
-                            this.paidCost[period - 1] = true
+                            if(!isNaN(period)){
+                                this.payoff -= this.c;
+                                this.paidCost[period - 1] = true
+                            }
+                            
                         }
                         
                         if(this.position == 0) {
@@ -776,6 +783,7 @@
         <input type="hidden" name="pay_method" v-model="pay_method"/>
         <input type="hidden" name="waiting_time" v-model="waiting_time"/>
         <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
+        <h1> discrete: { discrete }</h1>
 
         <!-- {% chat %} -->
      

@@ -127,7 +127,7 @@ data = [
         {  # Period 2: testing for double auction format
             #
             "settings": {
-                "duration": 120,
+                "duration": 30,
                 "swap_method": "bid",
                 "pay_method": "gain",
                 "k": 0.8,
@@ -137,10 +137,10 @@ data = [
             },
             "players": [
                 # pay_rate is value
-                {"pay_rate": 0.05, "endowment": 5, "c": 0.01},
-                {"pay_rate": 0.04, "endowment": 6, "c": 0.03},
-                {"pay_rate": 0.03, "endowment": 7, "c": 0.01},
-                {"pay_rate": 0.02, "endowment": 8, "c": 0.02},
+                {"pay_rate": 2, "endowment": 5, "c": 0.01},
+                {"pay_rate": 2, "endowment": 5, "c": 0.03},
+                {"pay_rate": 2, "endowment": 5, "c": 0.01},
+                {"pay_rate": 2, "endowment": 5, "c": 0.02},
             ],
         }
     ]
@@ -205,8 +205,7 @@ def export_data():
             """
 
             if "pay_method" not in settings:
-                raise ValueError(
-                    "Each period settings must have a pay_method variable")
+                raise ValueError("Each period settings must have a pay_method variable")
 
             if settings["pay_method"] not in ["gain", "lose"]:
                 raise ValueError(
