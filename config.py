@@ -127,12 +127,12 @@ data = [
         {  # Period 2: testing for double auction format
             #
             "settings": {
-                "duration": 30,
+                "duration": 60,
                 "swap_method": "bid",
                 "pay_method": "gain",
                 "k": 0.8,
                 "service_distribution": 1,
-                "discrete": False,
+                "discrete": True,
                 "messaging": True,
             },
             "players": [
@@ -205,7 +205,8 @@ def export_data():
             """
 
             if "pay_method" not in settings:
-                raise ValueError("Each period settings must have a pay_method variable")
+                raise ValueError(
+                    "Each period settings must have a pay_method variable")
 
             if settings["pay_method"] not in ["gain", "lose"]:
                 raise ValueError(

@@ -79,6 +79,7 @@
                 return {
                     initialOver: false,
                     initialPaid: false,
+                    debug: 'none',
                     
                     
 
@@ -88,6 +89,7 @@
                     paid: false,
                     message: 'placeholder',
                     start_pos: {{ start_pos_ | json }},
+                    end_pos: -1,
                     c: {{ c_ | json }},
                     pay_rate: {{ pay_rate_ | json }}, // pay rate == value
                     service_time: {{ service_time_ | json }},
@@ -197,21 +199,8 @@
                     let period = g_data[this.ID]['period']
                     if(this.service_color == '#28b738')
                         this.service_color = '#545353'
-                    if(this.served == true) { //entered the service room
-                        if (this.pay_method == 'gain') {
-                            if(!this.discrete){
-                                this.payoff += this.pay_rate
-                            }
-                            else if(!this.paid){
-
-                                this.payoff += this.pay_rate
-                                this.paid = true
-                                
-                            }
-                            
-                        }
-                    }
-                    else {  //still waiting outside
+                    
+                    if(!this.served){  //still waiting outside
           
                         this.waiting_time += 1
                         /*if(this.pay_method == 'lose') {
@@ -230,6 +219,7 @@
                         }
                         
                         if(this.position == 0) {
+                            this.end_pos = this.num_players_service
                             if(this.time_spent_in_front == this.service_time - 1) {
                                 this.service_color = '#28b738'
                                 this.next()
@@ -237,6 +227,7 @@
                                 this.served = true
                             }
                             else {
+                                this.payoff += this.pay_rate
                                 this.time_spent_in_front += 1
                             }
                         }
@@ -764,6 +755,7 @@
     <input type="hidden" name="time_Queue" id="arrive_time" />
     <input type="hidden" name="time_Service" id="sr_time" />
 
+
     <redwood-period></redwood-period>
     <redwood-channel
         id="channel"
@@ -782,8 +774,10 @@
         <input type="hidden" name="swap_method" v-model="swap_method"/>
         <input type="hidden" name="pay_method" v-model="pay_method"/>
         <input type="hidden" name="waiting_time" v-model="waiting_time"/>
+        <input type="hidden" name="initialPos" v-model="initialPos"/>
+        <input type="hidden" name="end_pos" v-model="end_pos"/>
         <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
-        <h1> discrete: { discrete }</h1>
+        <h1> debug: { debug }</h1>
 
         <!-- {% chat %} -->
      

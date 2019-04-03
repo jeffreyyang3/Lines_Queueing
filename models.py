@@ -64,6 +64,7 @@ class Player(BasePlayer):
 
     # position in queue player starts at
     start_pos = models.IntegerField()
+    end_pos = models.IntegerField()
 
     # time player takes to get serviced
     service_time = models.FloatField()

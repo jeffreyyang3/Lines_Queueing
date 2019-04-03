@@ -40,6 +40,7 @@ class QueueService(Page):
         "swap_method",
         "pay_method",
         "waiting_time",
+        "end_pos"
     ]
 
     def get_timeout_seconds(self):
@@ -54,8 +55,6 @@ class QueueService(Page):
         self.player.messaging = Constants.config[g_index][self.round_number -
                                                           1]["settings"]["messaging"]
         self.player.cost = self.participant.vars[self.round_number]['c']
-        print("XXXXXX")
-        print(self.player.messaging)
 
         return {
             "round_time_": Constants.config[g_index][self.round_number - 1]["settings"][
