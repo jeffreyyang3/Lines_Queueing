@@ -124,7 +124,92 @@ data =  [
 
 data = [
     [  # Group 1
-        {  # Period 2: testing for double auction format
+        {  # Period 1
+            #
+            "settings": {
+                "duration": 120,
+                "swap_method": "bid",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": True,
+                "messaging": True,
+            },
+            "players": [
+                # pay_rate is value
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+            ],
+        },
+        
+        {  # Period 2
+            #
+            "settings": {
+                "duration": 120,
+                "swap_method": "swap",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": True,
+                "messaging": False,
+            },
+            "players": [
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+            ],
+        },
+ 
+        {  # Period 3
+            #
+            "settings": {
+                "duration": 120,
+                "swap_method": "bid",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": False,
+                "messaging": True,
+            },
+            "players": [
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+            ],
+        },
+        
+        {  # Period 4
+            #
+            "settings": {
+                "duration": 120,
+                "swap_method": "swap",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": False,
+                "messaging": True,
+            },
+            "players": [
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+            ],
+        },
+        
+        {  # Period 5
             #
             "settings": {
                 "duration": 60,
@@ -136,13 +221,29 @@ data = [
                 "messaging": True,
             },
             "players": [
-                # pay_rate is value
-                {"pay_rate": 2, "endowment": 5, "c": 0.01},
-                {"pay_rate": 2, "endowment": 5, "c": 0.03},
-                {"pay_rate": 2, "endowment": 5, "c": 0.01},
-                {"pay_rate": 2, "endowment": 5, "c": 0.02},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
             ],
-        }
+        },
+        
+        {  # Period 6
+            #
+            "settings": {
+                "duration": 60,
+                "swap_method": "swap",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": True,
+                "messaging": True,
+            },
+            "players": [
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+            ],
+        },
     ]
 ]
 
