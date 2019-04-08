@@ -133,7 +133,7 @@ data = [
                 "k": 0.8,
                 "service_distribution": 1,
                 "discrete": True,
-                "messaging": True,
+                "messaging": False,
             },
             "players": [
                 # pay_rate is value
