@@ -143,6 +143,8 @@ data = [
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
             ],
         },
         
@@ -158,6 +160,8 @@ data = [
                 "messaging": False,
             },
             "players": [
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
@@ -185,6 +189,8 @@ data = [
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
             ],
         },
         
@@ -200,6 +206,8 @@ data = [
                 "messaging": True,
             },
             "players": [
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
@@ -224,6 +232,7 @@ data = [
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
             ],
         },
         
@@ -239,6 +248,7 @@ data = [
                 "messaging": True,
             },
             "players": [
+                {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
                 {"pay_rate": 5, "endowment": 5, "c": random.random()},
