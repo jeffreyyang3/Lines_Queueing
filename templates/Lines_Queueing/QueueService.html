@@ -98,6 +98,7 @@
                     served: false,
                     endowment: {{ endowment_ | json }},
                     payoff: {{ endowment_ | json }},
+                    tokens: 0,
                     position: {{ start_pos_ | json }},
                     in_trade: false, // state
                     requested: null, // person
@@ -114,6 +115,7 @@
                     discrete: {{ discrete | json}},
                     messaging: {{ messaging | json}},
                     swap_method: {{ swap_method_ | json}},
+                    tokenSwap: {{ tokenSwap | json}},
                     pay_method: {{ pay_method_ | json}},
                     start_time: null,
                     now: null,
@@ -166,6 +168,8 @@
             // watch functions are called every time the property associated with the function name
             // changes
             watch: {
+                
+                
                 // updates the alert that the player sees
                 current_alert: function() {
                     clearInterval(this.alert_interval)
@@ -194,7 +198,7 @@
                 // swap vs cut
 
                 now: function() {
-                    console.log(this.position)
+                    
                     
                     let period = g_data[this.ID]['period']
                     if(this.service_color == '#28b738')
@@ -621,9 +625,16 @@
             
             vm.last_event = parseInt(new Date().getTime() / 1000)
             if(p.in_trade == false && p.bid != null) {
-                vm.payoff = Number(vm.payoff) + Number(p.bid)
+                
+                if(vm.tokenSwap){
+                    vm.tokens += Number(p.bid)
+                    console.log(`i have ${vm.tokens} tokens`)
+                }
+                    
+                else{
+                    vm.payoff = Number(vm.payoff) + Number(p.bid)
+                }
                 p.bid = null
-      
             }
             vm.bid = p.bid
             vm.metadata = g_data['metadata']
@@ -774,9 +785,9 @@
         <input type="hidden" name="swap_method" v-model="swap_method"/>
         <input type="hidden" name="pay_method" v-model="pay_method"/>
         <input type="hidden" name="waiting_time" v-model="waiting_time"/>
-        <input type="hidden" name="initialPos" v-model="initialPos"/>
         <input type="hidden" name="end_pos" v-model="end_pos"/>
         <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
+        <input type="hidden" name="tokens" v-model="tokens"/>
         <h1> debug: { debug }</h1>
 
         <!-- {% chat %} -->

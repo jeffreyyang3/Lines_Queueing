@@ -1,9 +1,10 @@
 import random
+import math
 
 """
     - Data holds the data for one session.
     - Each inner list represents a group.
-    - Each inner inner dict represents a period. 
+    - Each inner inner dict represents a period.
     - Period dicts can have no more dictionaries than there are participants.
     - Each dict represents a player.
 
@@ -25,24 +26,24 @@ import random
     settings data:
         'duration': 100,
         # duration of the round in seconds
-        
+
         'swap_method': 'swap',
         # mode defining how trades occur
             # bid: players offer a portion of their endowment in exchange for a swap
             # swap: players ask to swap with no monetary incentive
             # cut: players can cut to any position in line
                 # this might take some money or something
-       
+
         'pay_method': 'gain',
         # treatment for paying
             # gain: accumulated $ increases every second in paying room (and not
             # in the queue/service room) by pay_rate
             # lose: accumulated $ decreases every second in queue & service room
                 # by pay_rate
-        
+
         'k': .5,
         # portion of the total round time that makes up everyone's service times
-        
+
         'service_distribution': 5,
         # how service times are assigned
         # if service times are explicitly defined for each player, this is ignored.
@@ -51,7 +52,7 @@ import random
             # than another. If 1, everyone will have the same service time.
             # If 10, service times are assigned randomly such that no person will have a service
             # time more than 10x longer than any other person
-        
+
 """
 
 """
@@ -123,140 +124,28 @@ data =  [
 """
 
 data = [
-    [  # Group 1
-        {  # Period 1
-            #
+    [
+        {
             "settings": {
                 "duration": 120,
-                "swap_method": "bid",
+                "swap_method": "swap",
+                "tokenSwap": True,
                 "pay_method": "gain",
                 "k": 0.8,
                 "service_distribution": 1,
                 "discrete": True,
                 "messaging": False,
+
             },
             "players": [
-                # pay_rate is value
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
+                {"pay_rate": 0.05, "endowment": 5, "c": random.random()},
+                {"pay_rate": 0.04, "endowment": 6, "c": random.random()},
+                {"pay_rate": 0.03, "endowment": 7, "c": random.random()},
+                {"pay_rate": 0.02, "endowment": 8, "c": random.random()},
             ],
-        },
-        
-        {  # Period 2
-            #
-            "settings": {
-                "duration": 120,
-                "swap_method": "swap",
-                "pay_method": "gain",
-                "k": 0.8,
-                "service_distribution": 1,
-                "discrete": True,
-                "messaging": False,
-            },
-            "players": [
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-            ],
-        },
- 
-        {  # Period 3
-            #
-            "settings": {
-                "duration": 120,
-                "swap_method": "bid",
-                "pay_method": "gain",
-                "k": 0.8,
-                "service_distribution": 1,
-                "discrete": False,
-                "messaging": True,
-            },
-            "players": [
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-            ],
-        },
-        
-        {  # Period 4
-            #
-            "settings": {
-                "duration": 120,
-                "swap_method": "swap",
-                "pay_method": "gain",
-                "k": 0.8,
-                "service_distribution": 1,
-                "discrete": False,
-                "messaging": True,
-            },
-            "players": [
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-            ],
-        },
-        
-        {  # Period 5
-            #
-            "settings": {
-                "duration": 60,
-                "swap_method": "bid",
-                "pay_method": "gain",
-                "k": 0.8,
-                "service_distribution": 1,
-                "discrete": True,
-                "messaging": True,
-            },
-            "players": [
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-            ],
-        },
-        
-        {  # Period 6
-            #
-            "settings": {
-                "duration": 60,
-                "swap_method": "swap",
-                "pay_method": "gain",
-                "k": 0.8,
-                "service_distribution": 1,
-                "discrete": True,
-                "messaging": True,
-            },
-            "players": [
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-                {"pay_rate": 5, "endowment": 5, "c": random.random()},
-            ],
-        },
+        }
     ]
 ]
-
 # shuffles order of groups, the order of periods within the group, and the order of players
 # within the period.
 # also fills default start_pos's with random positions

@@ -37,6 +37,7 @@ class Constants(BaseConstants):
         "cutting": "You have cut the line",
         "cutted": "Someone has cut in front of you",
         "requested": "You have been requested to swap",
+        "tokenRequested": "You have been requested to swap, for a token",
         "requesting": "You have requested to swap",
         "accepted": "Your swap request has been accepted",
         "accepting": "You have accepted a swap request",
@@ -62,6 +63,9 @@ class Player(BasePlayer):
     # amount of money player starts with
     endowment = models.FloatField()
 
+    # tokens gained in token mode
+    tokens = models.IntegerField(default=0)
+
     # position in queue player starts at
     start_pos = models.IntegerField()
     end_pos = models.IntegerField()
@@ -80,7 +84,7 @@ class Player(BasePlayer):
     # for now will separate the two
     # method by which players swap: bid, swap, or cut
     swap_method = models.StringField()
-
+    tokenSwap = models.BooleanField()
     # method by which players accumulate money: gain or lose
     pay_method = models.StringField()
 
@@ -98,7 +102,6 @@ class Player(BasePlayer):
     # c (cost per time not in service)
     cost = models.FloatField()
 
-
     def set_payoffs(self):
         self.payoff = self.in_round(self.session.vars["pr"]).round_payoff
 
@@ -110,7 +113,8 @@ class Group(RedwoodGroup):
     # for the timeout_seconds variable anyway.
 
     def period_length(self):
-        g_index = self.get_player_by_id(1).participant.vars[self.round_number]["group"]
+        g_index = self.get_player_by_id(
+            1).participant.vars[self.round_number]["group"]
         return Constants.config[g_index][self.round_number - 1]["settings"]["duration"]
 
     # takes in the data transferred back and forth by channels,
@@ -194,7 +198,7 @@ class Group(RedwoodGroup):
 
             player states; every player in the round is in exactly one of these states upon the
             initiation of an event (when this method gets called)
-            
+
             - reset: no event that involves this player has been initiated by the most recent
                 call to this method. There is no case for this, as the player's state
                 is not updated.
@@ -215,8 +219,10 @@ class Group(RedwoodGroup):
             swap_method = Constants.config[g_index][self.round_number - 1]["settings"][
                 "swap_method"
             ]
-
-            # someone has entered the service room
+            tokenSwap = Constants.config[g_index][self.round_number - 1]["settings"][
+                "tokenSwap"
+            ]
+                        # someone has entered the service room
             if p1["next"] == True:
                 if p1["pos"] == 0:
                     # service_clean
@@ -343,7 +349,14 @@ class Group(RedwoodGroup):
                         # fix for typeError when accepting a swap during which
                         # the swapMethod is 'swap'
                         if swap_method == "swap":
-                            p2["bid"] = None
+                            
+
+                            if(tokenSwap):
+                                p2['bid'] = 0
+                                p1['bid'] = 1
+                            else: 
+                                p2['bid'] = None
+
                         else:
                             p2["bid"] = -float(p1["bid"])
 
@@ -370,7 +383,8 @@ class Group(RedwoodGroup):
 class Subsession(BaseSubsession):
     def creating_session(self):
         if self.round_number == 1:
-            self.session.vars["pr"] = random.randrange(Constants.num_rounds) + 1
+            self.session.vars["pr"] = random.randrange(
+                Constants.num_rounds) + 1
 
         self.group_randomly()
 
@@ -422,4 +436,3 @@ class Subsession(BaseSubsession):
 metadata structure:
     { 'timestamp': {'bid': None/$, status': 'accepted/declined/cancelled/cut', 'requester': #, 'requestee': #, 'queue': [#,#,#...]}, ... }
 """
-

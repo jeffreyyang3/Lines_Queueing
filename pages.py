@@ -40,7 +40,8 @@ class QueueService(Page):
         "swap_method",
         "pay_method",
         "waiting_time",
-        "end_pos"
+        "end_pos",
+        "tokens",
     ]
 
     def get_timeout_seconds(self):
@@ -72,6 +73,9 @@ class QueueService(Page):
             "swap_method_": Constants.config[g_index][self.round_number - 1][
                 "settings"
             ]["swap_method"],
+            "tokenSwap": Constants.config[g_index][self.round_number - 1][
+                "settings"
+            ]["tokenSwap"],
             "pay_method_": Constants.config[g_index][self.round_number - 1]["settings"][
                 "pay_method"
             ],
@@ -118,6 +122,7 @@ class BetweenPages(Page):
             "numPlayers": len(all_players),
             "history": self.player.metadata,
             "id": self.player.id_in_group,
+            "tokens": self.player.tokens
         }
 
 
