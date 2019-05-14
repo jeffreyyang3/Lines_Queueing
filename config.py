@@ -127,9 +127,8 @@ data = [
     [
         {
             "settings": {
-                "duration": 120,
-                "swap_method": "swap",
-                "tokenSwap": True,
+                "duration": 180,
+                "swap_method": "bid",
                 "pay_method": "gain",
                 "k": 0.8,
                 "service_distribution": 1,
@@ -138,12 +137,51 @@ data = [
 
             },
             "players": [
-                {"pay_rate": 0.05, "endowment": 5, "c": random.random()},
-                {"pay_rate": 0.04, "endowment": 6, "c": random.random()},
-                {"pay_rate": 0.03, "endowment": 7, "c": random.random()},
-                {"pay_rate": 0.02, "endowment": 8, "c": random.random()},
+                # pay_rate is value
+                {"pay_rate": 2, "endowment": 5, "c": random.random()},
+                {"pay_rate": 2, "endowment": 4, "c": random.random()},
+                {"pay_rate": 2, "endowment": 6, "c": random.random()},
+                {"pay_rate": 2, "endowment": 7, "c": random.random()},
             ],
-        }
+        },
+        {  # Period 2: testing for double auction format
+            #
+            "settings": {
+                "duration": 180,
+                "swap_method": "swap",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": False,
+                "messaging": False,
+            },
+            "players": [
+                # pay_rate is value
+                {"pay_rate": 2, "endowment": 5, "c": 0.02},
+                {"pay_rate": 2, "endowment": 4, "c": 0.02},
+                {"pay_rate": 2, "endowment": 6, "c": 0.02},
+                {"pay_rate": 2, "endowment": 7, "c": 0.02},
+            ],
+        },
+        {  # Period 2: testing for double auction format
+            #
+            "settings": {
+                "duration": 180,
+                "swap_method": "double",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": False,
+                "messaging": False,
+            },
+            "players": [
+                # pay_rate is value
+                {"pay_rate": 2, "endowment": 5, "c": 0.02},
+                {"pay_rate": 2, "endowment": 4, "c": 0.02},
+                {"pay_rate": 2, "endowment": 6, "c": 0.02},
+                {"pay_rate": 2, "endowment": 7, "c": 0.02},
+            ],
+        },
     ]
 ]
 # shuffles order of groups, the order of periods within the group, and the order of players
@@ -205,8 +243,7 @@ def export_data():
             """
 
             if "pay_method" not in settings:
-                raise ValueError(
-                    "Each period settings must have a pay_method variable")
+                raise ValueError("Each period settings must have a pay_method variable")
 
             if settings["pay_method"] not in ["gain", "lose"]:
                 raise ValueError(
@@ -233,13 +270,15 @@ def export_data():
                 vals = [random.randrange(sd) + 1 for p in players]
                 vals = [v / sum(vals) for v in vals]
                 vals = [round(v * k * t) for v in vals]
+                positions = [n for n in range(1, len(period["players"]) + 1)]
                 for k, _ in enumerate(players):
                     data[i][j]["players"][k]["service_time"] = vals[k]
+                    data[i][j]["players"][k]["start_pos"] = positions[k]
 
     print("exported data is")
     print(data[0][0])
 
-    return shuffle(data)
+    return data
 
 
 """

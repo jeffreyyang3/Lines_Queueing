@@ -26,7 +26,7 @@ class Constants(BaseConstants):
     participation_fee = c(5)
 
     config = config_py.export_data()
-
+    print("CONFIG EXPORTED")
     num_rounds = len(config[0])
     num_players = sum([len(group[0]["players"]) for group in config])
     players_per_group = len(config[0][0]["players"])
@@ -139,37 +139,37 @@ class Group(RedwoodGroup):
             1) someone starts a trade request by pressing the trade button,
             2) someone responds to a trade request by pressing the yes or no button,
             3) someone enters the service room and the entire queue moves forward.
-        
+
         This method essentially defines a state machine. Each player has a state, represented by
         a dictionary with keys:
             id: id in group; a number from 1 to Constants.players_per_group,
-            
+
             pos: position in queue at time of input; a number from -Constants.players_per_group to
                 Constants.players_per_group,
-            
-            in_trade: boolean - true if this player has 
+
+            in_trade: boolean - true if this player has
                 1) requested a trade and awaits a response;
                 2) has been requested and has not yet responded,
-            
+
             last_trade_request: timestamp of the last time this player clicked the trade button,
-            
+
             requested: if this player has been requested to swap, the id of the player who made
                 the request; None, or a number from 1 to Constants.players_per_group,
-            
+
             requesting: if this player has made a request to swap, the id of the player who the
                 request was made to; None, or a number from 1 to Constants.players_per_group,
-            
+
             accepted: status of trade acceptance; 2 if requesting/no response/not in trade,
                 1 if accepted, 0 if declined,
-            
+
             alert: the current alert displayed to a player; a value in Constants.alert_messages,
-            
+
             num_players_queue: the number of players who have not entered the service room at
                 time of input; a number from 0 to Constants.players_per_group,
-            
+
             num_players_service: the number of players who have entered the service room at
                 time of input; a number from 0 to Constants.players_per_group,
-            
+
             next; boolean: true if someone's service time has just run out, false otherwise;
                 this is true when someone has passed into the service room, and everyone in
                 the queue should move forward one position.
@@ -177,7 +177,7 @@ class Group(RedwoodGroup):
         The state machine takes in the state of each player, and alters the states of that
         player and other players accordingly.
 
-        Note that upon this method being called, only one player's state can be different than it was 
+        Note that upon this method being called, only one player's state can be different than it was
         directly before the method was called; because each time an event occurs,
         (request, response, or next) this method gets called.
 
