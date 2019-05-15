@@ -219,9 +219,7 @@ class Group(RedwoodGroup):
             swap_method = Constants.config[g_index][self.round_number - 1]["settings"][
                 "swap_method"
             ]
-            tokenSwap = Constants.config[g_index][self.round_number - 1]["settings"][
-                "tokenSwap"
-            ]
+           
                         # someone has entered the service room
             if p1["next"] == True:
                 if p1["pos"] == 0:
@@ -349,13 +347,8 @@ class Group(RedwoodGroup):
                         # fix for typeError when accepting a swap during which
                         # the swapMethod is 'swap'
                         if swap_method == "swap":
-                            
 
-                            if(tokenSwap):
-                                p2['bid'] = 0
-                                p1['bid'] = 1
-                            else: 
-                                p2['bid'] = None
+                            p2['bid'] = None
 
                         else:
                             p2["bid"] = -float(p1["bid"])

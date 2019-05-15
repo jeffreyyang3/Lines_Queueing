@@ -73,9 +73,7 @@ class QueueService(Page):
             "swap_method_": Constants.config[g_index][self.round_number - 1][
                 "settings"
             ]["swap_method"],
-            "tokenSwap": Constants.config[g_index][self.round_number - 1][
-                "settings"
-            ]["tokenSwap"],
+         
             "pay_method_": Constants.config[g_index][self.round_number - 1]["settings"][
                 "pay_method"
             ],

@@ -208,17 +208,21 @@
                         /*if(this.pay_method == 'lose') {
                             this.payoff -= this.pay_rate
                         }*/
+                        if(this.position != 0){
+                            if(!this.discrete){
+                                this.payoff -= this.c
+                            }
+                            else if(!this.paidCost[period - 1]){
+                                if(!isNaN(period)){
+                                    this.payoff -= this.c;
+                                    this.paidCost[period - 1] = true
+                                }
 
-                        if(!this.discrete){
-                            this.payoff -= this.c
-                        }
-                        else if(!this.paidCost[period - 1]){
-                            if(!isNaN(period)){
-                                this.payoff -= this.c;
-                                this.paidCost[period - 1] = true
                             }
 
                         }
+
+                        
 
                         if(this.position == 0) {
                             this.end_pos = this.num_players_service
@@ -367,6 +371,7 @@
                 send_click: function(bid) {
                     this.bid_clicked = false
                     this.message = "No Message (should not be visible)"
+                    
                     if(this.messaging){
                         this.message = document.getElementById('inputMessage').value
                     }
@@ -382,6 +387,7 @@
                     // when player 2 gives bid in response, vm bid(2) will be player 1's original bid
 
                     else if (this.swap_method == 'double') {
+                        this.bid = document.getElementById('bid').value
                         console.log("double auction format in send_click")
                         console.log("bid 1 is: " + this.bid)
                         console.log("vm bid (2) is: " +vm.bid)
@@ -440,10 +446,10 @@
             <circle cx="45" cy="60" r="40" style="fill: #545353;"
                 v-if="comp_pos == self_pos"/>
             <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
-                { comp_pos }
+            <!--    { comp_pos } brett wanted the numbers to not be visible -->
             </text>
             <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
-                { comp_pos }
+              <!--  { comp_pos } -->
             </text>
         </svg>
     </div>

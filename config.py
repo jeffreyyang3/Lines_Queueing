@@ -127,8 +127,8 @@ data = [
     [
         {
             "settings": {
-                "duration": 180,
-                "swap_method": "bid",
+                "duration": 60,
+                "swap_method": "double",
                 "pay_method": "gain",
                 "k": 0.8,
                 "service_distribution": 1,
@@ -243,7 +243,8 @@ def export_data():
             """
 
             if "pay_method" not in settings:
-                raise ValueError("Each period settings must have a pay_method variable")
+                raise ValueError(
+                    "Each period settings must have a pay_method variable")
 
             if settings["pay_method"] not in ["gain", "lose"]:
                 raise ValueError(
