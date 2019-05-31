@@ -370,7 +370,7 @@
                 },
                 send_click: function(bid) {
                     this.bid_clicked = false
-                    this.message = "No Message (should not be visible)"
+                    this.message = "None"
                     
                     if(this.messaging){
                         this.message = document.getElementById('inputMessage').value
@@ -381,6 +381,7 @@
 
                         vm.request({pos: this.comp_pos, bid: null, message: this.message})
                     }
+                    
 
 
                     // for player 1's bid, vm bid(2) will be null
@@ -428,9 +429,11 @@
 
                     else {
                         this.bid = document.getElementById('bid').value
+
                         if(this.bid < 0 || this.bid > vm.payoff){
                                 vm.current_alert = 'Your bid must be between 0 and your current payoff'
                         }
+                        
                         else {
                             vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2),
                             message: this.message})
@@ -574,18 +577,20 @@
             style="width: 100%; text-align: center">
             <!-- Bid: { in_bid } -->
         <p>
-
-        <input v-if="comp_pos == self_pos + 1 && requested != null"
+        <div style="text-align: center;">
+            <input v-if="comp_pos == self_pos + 1 && requested != null"
             type="number" id="bid" max="vm.payoff" min="0"
-            style="width: 58%; margin-left: 22px"
+            style="width: 58%; "
             onKeyPress="if (event.keyCode == 13) return false"/>
-
-        <div class="col-6">
             <button type="button" class="btn btn-large btn-yes"
-                style="margin-left: 22 px;"
+                style="margin-left: 0px; margin-top: 5px"
                 v-if="comp_pos == self_pos + 1 && requested != null"
                 v-on:click="send_click">Send</button>
+            
+            
+            
         </div>
+        
     </div>
 
 </div>

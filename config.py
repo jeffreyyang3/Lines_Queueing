@@ -127,7 +127,7 @@ data = [
     [
         {
             "settings": {
-                "duration": 60,
+                "duration": 120,
                 "swap_method": "double",
                 "pay_method": "gain",
                 "k": 0.8,

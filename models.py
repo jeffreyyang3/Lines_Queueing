@@ -351,6 +351,9 @@ class Group(RedwoodGroup):
                             p2['bid'] = None
 
                         else:
+                            print("ASDFASDFASDF")
+                            print(p1["bid"])
+                            print(type(p1['bid']))
                             p2["bid"] = -float(p1["bid"])
 
                         # p2['bid'] = -float(p1['bid'])
