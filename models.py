@@ -113,8 +113,7 @@ class Group(RedwoodGroup):
     # for the timeout_seconds variable anyway.
 
     def period_length(self):
-        g_index = self.get_player_by_id(
-            1).participant.vars[self.round_number]["group"]
+        g_index = self.get_player_by_id(1).participant.vars[self.round_number]["group"]
         return Constants.config[g_index][self.round_number - 1]["settings"]["duration"]
 
     # takes in the data transferred back and forth by channels,
@@ -219,8 +218,8 @@ class Group(RedwoodGroup):
             swap_method = Constants.config[g_index][self.round_number - 1]["settings"][
                 "swap_method"
             ]
-           
-                        # someone has entered the service room
+
+            # someone has entered the service room
             if p1["next"] == True:
                 if p1["pos"] == 0:
                     # service_clean
@@ -347,13 +346,12 @@ class Group(RedwoodGroup):
                         # fix for typeError when accepting a swap during which
                         # the swapMethod is 'swap'
                         if swap_method == "swap":
-
-                            p2['bid'] = None
+                            p2["bid"] = None
 
                         else:
-                            print("ASDFASDFASDF")
+                            print("YO")
+                            print(p2["bid"])
                             print(p1["bid"])
-                            print(type(p1['bid']))
                             p2["bid"] = -float(p1["bid"])
 
                         # p2['bid'] = -float(p1['bid'])
@@ -379,8 +377,7 @@ class Group(RedwoodGroup):
 class Subsession(BaseSubsession):
     def creating_session(self):
         if self.round_number == 1:
-            self.session.vars["pr"] = random.randrange(
-                Constants.num_rounds) + 1
+            self.session.vars["pr"] = random.randrange(Constants.num_rounds) + 1
 
         self.group_randomly()
 

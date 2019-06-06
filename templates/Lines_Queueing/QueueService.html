@@ -168,8 +168,8 @@
             // watch functions are called every time the property associated with the function name
             // changes
             watch: {
-                
-                
+
+
                 // updates the alert that the player sees
                 current_alert: function() {
                     clearInterval(this.alert_interval)
@@ -222,7 +222,7 @@
 
                         }
 
-                        
+
 
                         if(this.position == 0) {
                             this.end_pos = this.num_players_service
@@ -293,6 +293,7 @@
                 },
                 // respond to a request: called when a player clicks a yes/no button
                 respond: function(yesno) {
+                    // XXX
                     g_data[this.ID]['accepted'] = yesno
                     this.update()
                 },
@@ -371,7 +372,7 @@
                 send_click: function(bid) {
                     this.bid_clicked = false
                     this.message = "None"
-                    
+
                     if(this.messaging){
                         this.message = document.getElementById('inputMessage').value
                     }
@@ -381,23 +382,26 @@
 
                         vm.request({pos: this.comp_pos, bid: null, message: this.message})
                     }
-                    
+
 
 
                     // for player 1's bid, vm bid(2) will be null
                     // when player 2 gives bid in response, vm bid(2) will be player 1's original bid
 
                     else if (this.swap_method == 'double') {
-                        this.bid = document.getElementById('bid').value
+                        this.bid = parseFloat(document.getElementById('bid').value)
                         console.log("double auction format in send_click")
                         console.log("bid 1 is: " + this.bid)
                         console.log("vm bid (2) is: " +vm.bid)
+                        console.log(typeof this.bid)
+                        console.log(typeof vm.bid)
 
-                        if(this.bid < 0 || this.bid > vm.payoff){
-                            vm.current_alert = 'Your bid must be between 0 and your current payoff'
+                        if(this.bid < 0){
+                            vm.current_alert = "Your bid can't be below 0"
                         }
                         else {
                             if (vm.bid != null) {
+                                vm.bid = parseFloat(vm.bid)
                                 if (vm.bid > this.bid) {
                                     console.log("swap accepted")
 
@@ -433,7 +437,7 @@
                         if(this.bid < 0 || this.bid > vm.payoff){
                                 vm.current_alert = 'Your bid must be between 0 and your current payoff'
                         }
-                        
+
                         else {
                             vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2),
                             message: this.message})
@@ -586,11 +590,11 @@
                 style="margin-left: 0px; margin-top: 5px"
                 v-if="comp_pos == self_pos + 1 && requested != null"
                 v-on:click="send_click">Send</button>
-            
-            
-            
+
+
+
         </div>
-        
+
     </div>
 
 </div>
@@ -643,12 +647,12 @@
 
             vm.last_event = parseInt(new Date().getTime() / 1000)
             if(p.in_trade == false && p.bid != null) {
-                
+
                 if(vm.tokenSwap){
                     vm.tokens += Number(p.bid)
                     console.log(`i have ${vm.tokens} tokens`)
                 }
-                    
+
                 else{
                     vm.payoff = Number(vm.payoff) + Number(p.bid)
                 }
@@ -806,7 +810,7 @@
         <input type="hidden" name="end_pos" v-model="end_pos"/>
         <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
         <input type="hidden" name="tokens" v-model="tokens"/>
-        <h1> debug: { debug }</h1>
+
 
         <!-- {% chat %} -->
 

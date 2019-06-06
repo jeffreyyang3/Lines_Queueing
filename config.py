@@ -127,14 +127,13 @@ data = [
     [
         {
             "settings": {
-                "duration": 120,
+                "duration": 12000,
                 "swap_method": "double",
                 "pay_method": "gain",
                 "k": 0.8,
                 "service_distribution": 1,
                 "discrete": True,
                 "messaging": False,
-
             },
             "players": [
                 # pay_rate is value
@@ -148,12 +147,12 @@ data = [
             #
             "settings": {
                 "duration": 180,
-                "swap_method": "swap",
+                "swap_method": "bid",
                 "pay_method": "gain",
                 "k": 0.8,
                 "service_distribution": 1,
                 "discrete": False,
-                "messaging": False,
+                "messaging": True,
             },
             "players": [
                 # pay_rate is value
@@ -243,8 +242,7 @@ def export_data():
             """
 
             if "pay_method" not in settings:
-                raise ValueError(
-                    "Each period settings must have a pay_method variable")
+                raise ValueError("Each period settings must have a pay_method variable")
 
             if settings["pay_method"] not in ["gain", "lose"]:
                 raise ValueError(
