@@ -125,9 +125,29 @@ data =  [
 
 data = [
     [
-        {
+        {  # Practice 1: swap, communication, 4 players (2 groups)
+            #
             "settings": {
-                "duration": 12000,
+                "duration": 60,
+                "swap_method": "swap",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": True,
+                "messaging": True,
+            },
+            "players": [
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            ],
+        },
+
+        {  # Practice 2: double, no communication, 4 players (2 groups)
+            #
+            "settings": {
+                "duration": 100,
                 "swap_method": "double",
                 "pay_method": "gain",
                 "k": 0.8,
@@ -136,52 +156,92 @@ data = [
                 "messaging": False,
             },
             "players": [
-                # pay_rate is value
-                {"pay_rate": 2, "endowment": 5, "c": random.random()},
-                {"pay_rate": 2, "endowment": 4, "c": random.random()},
-                {"pay_rate": 2, "endowment": 6, "c": random.random()},
-                {"pay_rate": 2, "endowment": 7, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
             ],
         },
-        {  # Period 2: testing for double auction format
+
+        {  # Period 1-4: swap, no communication, 4 players (2 groups)
             #
             "settings": {
-                "duration": 180,
-                "swap_method": "bid",
+                "duration": 100,
+                "swap_method": "swap",
                 "pay_method": "gain",
                 "k": 0.8,
                 "service_distribution": 1,
-                "discrete": False,
-                "messaging": True,
+                "discrete": True,
+                "messaging": False,
             },
             "players": [
-                # pay_rate is value
-                {"pay_rate": 2, "endowment": 5, "c": 0.02},
-                {"pay_rate": 2, "endowment": 4, "c": 0.02},
-                {"pay_rate": 2, "endowment": 6, "c": 0.02},
-                {"pay_rate": 2, "endowment": 7, "c": 0.02},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
             ],
         },
-        {  # Period 2: testing for double auction format
+
+        {  # Period 5-8: Double, no communication, 4 players (2 groups)
             #
             "settings": {
-                "duration": 180,
+                "duration": 100,
                 "swap_method": "double",
                 "pay_method": "gain",
                 "k": 0.8,
                 "service_distribution": 1,
-                "discrete": False,
+                "discrete": True,
                 "messaging": False,
             },
             "players": [
-                # pay_rate is value
-                {"pay_rate": 2, "endowment": 5, "c": 0.02},
-                {"pay_rate": 2, "endowment": 4, "c": 0.02},
-                {"pay_rate": 2, "endowment": 6, "c": 0.02},
-                {"pay_rate": 2, "endowment": 7, "c": 0.02},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
             ],
         },
-    ]
+
+        {  # Period 9-12: swap, with communication, 4 players (2 groups)
+            #
+            "settings": {
+                "duration": 100,
+                "swap_method": "swap",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": True,
+                "messaging": True,
+            },
+            "players": [
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            ],
+        },
+
+        {  # Period 13-16: Take it or leave it, with communication, 4 players (2 groups)
+            #
+            "settings": {
+                "duration": 100,
+                "swap_method": "bid",
+                "pay_method": "gain",
+                "k": 0.8,
+                "service_distribution": 1,
+                "discrete": True,
+                "messaging": True,
+            },
+            "players": [
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+                {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            ],
+        },
+
+
+    ],
+
 ]
 # shuffles order of groups, the order of periods within the group, and the order of players
 # within the period.
@@ -242,7 +302,8 @@ def export_data():
             """
 
             if "pay_method" not in settings:
-                raise ValueError("Each period settings must have a pay_method variable")
+                raise ValueError(
+                    "Each period settings must have a pay_method variable")
 
             if settings["pay_method"] not in ["gain", "lose"]:
                 raise ValueError(

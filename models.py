@@ -103,7 +103,11 @@ class Player(BasePlayer):
     cost = models.FloatField()
 
     def set_payoffs(self):
-        self.payoff = self.in_round(self.session.vars["pr"]).round_payoff
+        self.payoff = self.in_round(
+            self.session.vars["pr"]).round_payoff
+        self.participant.payoff += self.in_round(
+            self.session.vars["pr"]).round_payoff
+        # self.participant.payoff += self.payoff
 
 
 class Group(RedwoodGroup):
@@ -113,7 +117,8 @@ class Group(RedwoodGroup):
     # for the timeout_seconds variable anyway.
 
     def period_length(self):
-        g_index = self.get_player_by_id(1).participant.vars[self.round_number]["group"]
+        g_index = self.get_player_by_id(
+            1).participant.vars[self.round_number]["group"]
         return Constants.config[g_index][self.round_number - 1]["settings"]["duration"]
 
     # takes in the data transferred back and forth by channels,
@@ -377,7 +382,8 @@ class Group(RedwoodGroup):
 class Subsession(BaseSubsession):
     def creating_session(self):
         if self.round_number == 1:
-            self.session.vars["pr"] = random.randrange(Constants.num_rounds) + 1
+            self.session.vars["pr"] = random.randrange(
+                Constants.num_rounds) + 1
 
         self.group_randomly()
 
