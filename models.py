@@ -10,7 +10,7 @@ from otree.api import (
 from otree_redwood.models import Group as RedwoodGroup
 from . import config as config_py
 import random
-
+import json
 """
 Eli Pandolfo <epandolf@ucsc.edu>
 
@@ -29,7 +29,9 @@ class Constants(BaseConstants):
     print("CONFIG EXPORTED")
     num_rounds = len(config[0])
     num_players = sum([len(group[0]["players"]) for group in config])
+    num_players = 4
     players_per_group = len(config[0][0]["players"])
+    players_per_group = 4
 
     # these will be displayed to players in the UI. Defined here for consistency and
     # a central location
@@ -105,9 +107,14 @@ class Player(BasePlayer):
     def set_payoffs(self):
         self.payoff = self.in_round(
             self.session.vars["pr"]).round_payoff
-        self.participant.payoff += self.in_round(
-            self.session.vars["pr"]).round_payoff
+        # self.participant.payoff += self.in_round(
+        #     self.session.vars["pr"]).round_payoff
         # self.participant.payoff += self.payoff
+        print("in set payoffs")
+        print(self.participant.payoff)
+        print(self.round_payoff)
+        self.participant.payoff += self.round_payoff
+        print(self.participant.payoff)
 
 
 class Group(RedwoodGroup):
@@ -392,6 +399,8 @@ class Subsession(BaseSubsession):
             self.session.vars[self.round_number] = []
             for i in range(Constants.num_rounds):
                 self.session.vars[self.round_number].append({})
+                self.session.vars[self.round_number].append({})
+            print(g_index)
             g_data = Constants.config[g_index][self.round_number - 1]["players"]
 
             # sets up each player's starting values

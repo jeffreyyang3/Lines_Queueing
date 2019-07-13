@@ -1,11 +1,10 @@
 import random
 import math
-import json
 data = [[
     {  # Type 1: double, no communication, 8 players
         #
         "settings": {
-            "duration": 13500,
+            "duration": 135,
             "swap_method": "bid",
             "pay_method": "gain",
             "k": 0.8,
@@ -13,12 +12,16 @@ data = [[
             "discrete": True,
             "messaging": False,
         },
-        "players": [
+        "players": [[
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
-        ],
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+        ] for i in range(2)],
     },
 
 ]]
@@ -50,8 +53,6 @@ def export_csv(fname, data):
 # formats data to make it easier for models.py to parse it
 def export_data():
     # error handling & filling defaults
-    
-
     for i, group in enumerate(data):
         for j, period in enumerate(group):
             if "settings" not in period:
@@ -115,10 +116,8 @@ def export_data():
 
     print("exported data is")
     print(data[0][0])
-    data.append(data[0])
-    with open('older.json', 'w') as outfile:
-        json.dump(data, outfile)
 
     return data
 
 
+100

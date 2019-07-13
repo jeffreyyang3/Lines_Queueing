@@ -120,7 +120,10 @@ class BetweenPages(Page):
             "numPlayers": len(all_players),
             "history": self.player.metadata,
             "id": self.player.id_in_group,
-            "tokens": self.player.tokens
+            "tokens": self.player.tokens,
+            "roundpayoff": self.player.round_payoff,
+            "group": self.group,
+            "Asdf": self.group.get_players
         }
 
 
