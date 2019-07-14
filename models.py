@@ -395,12 +395,12 @@ class Subsession(BaseSubsession):
         self.group_randomly()
 
         # since there is no group.vars, all group data is stored in session.vars,
+
+        self.session.vars[self.round_number] = [{} for i in range(len(self.get_groups()))]
         for g_index, g in enumerate(self.get_groups()):
-            self.session.vars[self.round_number] = []
-            for i in range(Constants.num_rounds):
-                self.session.vars[self.round_number].append({})
-                self.session.vars[self.round_number].append({})
-            print(g_index)
+            # for i in range(Constants.num_rounds):
+            #     self.session.vars[self.round_number].append({})
+
             g_data = Constants.config[g_index][self.round_number - 1]["players"]
 
             # sets up each player's starting values
@@ -436,6 +436,7 @@ class Subsession(BaseSubsession):
                     "num_players_service": 0,
                     "next": False,
                 }
+
                 self.session.vars[self.round_number][g_index][p.id_in_group] = p_data
                 self.session.vars[self.round_number][g_index]["metadata"] = {}
 
