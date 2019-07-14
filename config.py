@@ -21,7 +21,7 @@ data = [[
         ],
     },
 
-]]
+] for i in range(2)]
 
 
 def shuffle(data):
@@ -115,7 +115,7 @@ def export_data():
 
     print("exported data is")
     print(data[0][0])
-    data.append(data[0])
+    # data.append(data[0])
     with open('older.json', 'w') as outfile:
         json.dump(data, outfile)
 

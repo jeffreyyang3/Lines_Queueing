@@ -69,6 +69,7 @@ class QueueService(Page):
             "round_": self.round_number,
             "num_players_": Constants.num_players,
             "data": self.session.vars[self.round_number][g_index],
+            "raw": self.session.vars,
             "id": self.player.id_in_group,
             "swap_method_": Constants.config[g_index][self.round_number - 1][
                 "settings"
