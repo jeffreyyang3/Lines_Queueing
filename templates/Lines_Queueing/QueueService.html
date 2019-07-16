@@ -371,9 +371,9 @@
                 },
                 send_click: function(bid) {
                     this.bid_clicked = false
-                    this.message = "None"
+                    this.message = ""
 
-                    if(this.messaging){
+                    if(this.messaging && document.getElementById('inputMessage')){
                         this.message = document.getElementById('inputMessage').value
                     }
 
@@ -392,7 +392,7 @@
                         this.bid = parseFloat(document.getElementById('bid').value)
                         console.log("double auction format in send_click")
                         console.log("bid 1 is: " + this.bid)
-                        console.log("vm bid (2) is: " +vm.bid)
+                        console.log("vm bid (2) is: " + vm.bid)
                         console.log(typeof this.bid)
                         console.log(typeof vm.bid)
 
@@ -427,7 +427,7 @@
                             }
                             // only the requester has given his/her bid
                             else {
-                                vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
+                                vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2), message: this.message})
                             }
                         }
                     }
@@ -445,6 +445,9 @@
                         }
                     }
                 }
+            },
+            mounted(){
+                console.log(this.comp_pos == this.num_players - 1)
             },
             template: `
                 <div v-if="num_players >= comp_pos">
@@ -574,6 +577,8 @@
             style="width: 58%; margin-left: 22px"
             onKeyPress="if (event.keyCode == 13) return false"/>
 
+            <textarea id="inputMessage" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"  />
+
          <button type="button" class="btn btn-large"
             style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
             v-on:click="send_click">Send</button>
@@ -581,6 +586,9 @@
         <p v-if="comp_pos == self_pos + 1 && requested != null"
             style="width: 100%; text-align: center">
             <!-- Bid: { in_bid } -->
+        <div id="displayMessage" class="col-6"
+        v-if="comp_pos == self_pos + 1 && requested != null && messaging">
+        message from {comp_pos}: {message} </div>
         <p>
         <div style="text-align: center;">
             <input v-if="comp_pos == self_pos + 1 && requested != null"

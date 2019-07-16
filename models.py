@@ -29,8 +29,10 @@ class Constants(BaseConstants):
     print("CONFIG EXPORTED")
     num_rounds = len(config[0])
     num_players = sum([len(group[0]["players"]) for group in config])
-    num_players = 4
+    num_players = len(config[0][0]["players"])
+
     players_per_group = len(config[0][0]["players"])
+
     players_per_group = 4
 
     # these will be displayed to players in the UI. Defined here for consistency and
@@ -396,7 +398,8 @@ class Subsession(BaseSubsession):
 
         # since there is no group.vars, all group data is stored in session.vars,
 
-        self.session.vars[self.round_number] = [{} for i in range(len(self.get_groups()))]
+        self.session.vars[self.round_number] = [{}
+                                                for i in range(len(self.get_groups()))]
         for g_index, g in enumerate(self.get_groups()):
             # for i in range(Constants.num_rounds):
             #     self.session.vars[self.round_number].append({})
