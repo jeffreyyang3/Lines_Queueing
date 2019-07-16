@@ -6,12 +6,12 @@ data = [[
         #
         "settings": {
             "duration": 13500,
-            "swap_method": "bid",
+            "swap_method": "swap",
             "pay_method": "gain",
             "k": 0.8,
             "service_distribution": 1,
             "discrete": True,
-            "messaging": False,
+            "messaging": True,
         },
         "players": [
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
