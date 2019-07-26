@@ -198,7 +198,7 @@
                 // swap vs cut
 
                 now: function() {
-                    let period = g_data[this.ID]['period']
+                    period = g_data[this.ID]['period']
                     if(this.service_color == '#28b738')
                         this.service_color = '#545353'
 
@@ -276,16 +276,16 @@
                 // single argument is the position of the requestee
                 // the position of the requester is stored in data and is already known
                 request: function(obj) {
-                    pos = obj['pos']
-                    bid = obj['bid']
-                    message = obj['message']
-                    for(let p in g_data) {
+                    pos = obj['pos'];
+                    bid = obj['bid'];
+                    message = obj['message'];
+                    for(p in g_data) {
                         if (g_data.hasOwnProperty(p) && p != 'metadata') {
                             if(g_data[p]['pos'] == pos) {
-                                g_data[this.ID]['requesting'] = g_data[p]['id']
-                                g_data[this.ID]['last_trade_request'] = new Date().getTime()
-                                g_data[this.ID]['bid'] = bid
-                                g_data[this.ID]['message'] = message
+                                g_data[this.ID]['requesting'] = g_data[p]['id'];
+                                g_data[this.ID]['last_trade_request'] = new Date().getTime();
+                                g_data[this.ID]['bid'] = bid;
+                                g_data[this.ID]['message'] = message || "No Message";
                             }
                         }
                     }
@@ -347,7 +347,7 @@
         Vue.component( 'q-bubble', {
             delimiters: ['{', '}'],
             props: ['num_players', 'comp_pos', 'self_pos', 'requested', 'swap_method',
-            'swap', 'message', 'messaging'],
+            'swap', 'message', 'messaging', 'id'],
             data: function() {
                 return {
                     bid: null,
@@ -393,9 +393,6 @@
                         console.log("double auction format in send_click")
                         console.log("bid 1 is: " + this.bid)
                         console.log("vm bid (2) is: " + vm.bid)
-                        console.log(typeof this.bid)
-                        console.log(typeof vm.bid)
-
 
                         if(this.bid < 0 || isNaN(this.bid)){
                             vm.current_alert = "Invalid bid"
@@ -403,8 +400,17 @@
                         else {
                             if (vm.bid != null) {
                                 vm.bid = parseFloat(vm.bid)
+                                console.log(g_data)
+                                console.log(typeof this.id)
+                                g_data[this.id]['doubleRequestPrice'] = vm.bid
+                                g_data[this.id]['doubleAcceptPrice'] = this.bid
                                 if (vm.bid > this.bid) {
                                     console.log("swap accepted")
+                                // g_data[this.ID]['doubleRequestPrice'] 
+                                // g_data[this.ID]['doubleAcceptPrice'] 
+
+
+                                    
 
                                     console.log("vm bid before: " + vm.bid)
                                     console.log("this.bid before :" + this.bid)
@@ -416,6 +422,8 @@
                                     console.log("this bid is " + this.bid)
                                     console.log("avg bid is now: " + avg_bid)
                                     this.bid = avg_bid
+
+
 
                                     // vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
                                     vm.respond(1)
@@ -866,7 +874,7 @@
                         <div class="row" v-bind:style="{ height: (.6625 * h - 2) + 'px' }">
                             <div class="col-2 queue-1">
                                 <q-bubble
-                                    v-bind:message="message"
+                                    v-bind:message="message" v-bind:id="ID"
                                     v-bind:messaging="messaging"
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="5"
@@ -876,7 +884,7 @@
                                     v-on:request="request">
                                 </q-bubble>
                                 <q-bubble
-                                    v-bind:message="message"
+                                    v-bind:message="message" v-bind:id="ID"
                                     v-bind:messaging="messaging"
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="6"
@@ -888,7 +896,7 @@
                             </div>
                             <div class="col-2 queue-2">
                                 <q-bubble
-                                    v-bind:message="message"
+                                    v-bind:message="message" v-bind:id="ID"
                                     v-bind:messaging="messaging"
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="4"
@@ -899,7 +907,7 @@
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message"
+                                    v-bind:message="message" v-bind:id="ID"
                                     v-bind:messaging="messaging"
                                     comp_pos="7"
                                     v-bind:self_pos="position"
@@ -911,7 +919,7 @@
                             <div class="col-2 queue-1">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message"
+                                    v-bind:message="message" v-bind:id="ID"
                                     v-bind:messaging="messaging"
                                     comp_pos="3"
                                     v-bind:self_pos="position"
@@ -921,7 +929,7 @@
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    v-bind:message="message" v-bind:id="ID" v-bind:messaging="messaging"
                                     comp_pos="8"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -932,7 +940,7 @@
                             <div class="col-2 queue-2">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    v-bind:message="message" v-bind:id="ID" v-bind:messaging="messaging"
                                     comp_pos="2"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -941,7 +949,7 @@
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    v-bind:message="message" v-bind:id="ID" v-bind:messaging="messaging"
                                     comp_pos="9"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -952,7 +960,7 @@
                             <div class="col-2 queue-1">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
-                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    v-bind:message="message" v-bind:id="ID" v-bind:messaging="messaging"
                                     comp_pos="1"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"

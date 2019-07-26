@@ -18,7 +18,7 @@ data = [[
     {  # Type 1: double, no communication, 8 players
         #
         "settings": {
-            "duration": 18000,
+            "duration": 100,
             "swap_method": "double",
             "pay_method": "gain",
             "k": 0.8,

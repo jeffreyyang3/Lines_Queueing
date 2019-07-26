@@ -228,6 +228,10 @@ class Group(RedwoodGroup):
 
             # gets this player's dict from the transmitted event
             p1 = event.value[str(p.id_in_group)]
+            print("xxxx")
+            print(p1)
+            print(json.dumps(p1, indent=4))
+            print("xxxx")
             g_index = p.participant.vars[self.round_number]["group"]
             swap_method = Constants.config[g_index][self.round_number - 1]["settings"][
                 "swap_method"
@@ -305,14 +309,11 @@ class Group(RedwoodGroup):
                     p2 = event.value[str(p1["requesting"])]
                     # requesting_clean
                     if not p2["in_trade"]:
-                        print("CORRECT ")
-                        message = p1.get("message")
-                        print(message)
                         p1["in_trade"] = True
                         p2["in_trade"] = True
                         p2["requested"] = p1["id"]
                         p2["bid"] = p1["bid"]
-                        p2["message"] = message
+                        p2["message"] = p1["message"]
                         p1["alert"] = Constants.alert_messages["requesting"]
                         p2["alert"] = Constants.alert_messages["requested"]
                         event.value[str(p1["requesting"])] = p2
@@ -374,6 +375,9 @@ class Group(RedwoodGroup):
                     metadata["requester"] = p2["id"]
                     metadata["requestee"] = p1["id"]
                     metadata["message"] = p1.get("message")
+                    metadata["doubleRequestPrice"] = p1.get(
+                        "doubleRequestPrice")
+                    metadata["doubleAcceptPrice"] = p1.get("doubleAcceptPrice")
                     metadata["bid"] = p1["bid"]
                     timestamp = p2["last_trade_request"]
                     p2["last_trade_request"] = None
