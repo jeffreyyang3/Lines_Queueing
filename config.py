@@ -18,7 +18,7 @@ data = [[
     {  # Type 1: double, no communication, 8 players
         #
         "settings": {
-            "duration": 100,
+            "duration": 120,
             "swap_method": "double",
             "pay_method": "gain",
             "k": 0.8,
@@ -32,7 +32,45 @@ data = [[
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
         ],
-    } for i in range(2)
+
+    },
+    {  # Type 1: double, no communication, 8 players
+        #
+        "settings": {
+            "duration": 120,
+            "swap_method": "swap",
+            "pay_method": "gain",
+            "k": 0.8,
+            "service_distribution": 1,
+            "discrete": False,
+            "messaging": True,
+        },
+        "players": [
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+        ],
+    }, {
+        # Type 1: double, no communication, 8 players
+        #
+        "settings": {
+            "duration": 120,
+            "swap_method": "bid",
+            "pay_method": "gain",
+            "k": 0.8,
+            "service_distribution": 1,
+            "discrete": True,
+            "messaging": True,
+        },
+        "players": [
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+        ],
+    }
+
 
 ] for i in range(2)]
 data[1][1]['settings']['messaging'] = False
